@@ -4,6 +4,7 @@ import 'package:table_calendar/table_calendar.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/calendar_provider.dart';
 import '../action/action_edit_screen.dart';
+import 'package:month_action/data/models/action_model.dart';
 
 typedef DateChangedCallback = void Function(DateTime date);
 
@@ -210,7 +211,16 @@ class _WeeklyCalendarViewState extends State<WeeklyCalendarView> {
   Widget _buildActionTile(BuildContext context, dynamic action) {
     return ListTile(
       title: Text(action.title),
-      subtitle: Text(DateFormat('HH:mm').format(action.date)),
+      subtitle:
+          action.category == CategoryType.expense
+              ? Text('${NumberFormat('#,###').format(action.amount)}원')
+              : (action.description != null && action.description.isNotEmpty
+                  ? Text(
+                    action.description,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                  : const SizedBox.shrink()),
       trailing: GestureDetector(
         onTap: () {
           Provider.of<CalendarProvider>(context, listen: false).updateAction(

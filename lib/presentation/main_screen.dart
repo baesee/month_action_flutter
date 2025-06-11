@@ -19,7 +19,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   final List<GlobalKey<NavigatorState>> _navigatorKeys = List.generate(
-    5,
+    4,
     (_) => GlobalKey<NavigatorState>(),
   );
 
@@ -39,7 +39,6 @@ class _MainScreenState extends State<MainScreen> {
   static const List<String> _initialRoutes = [
     '/monthly',
     '/category',
-    '/action',
     '/statistics',
     '/settings',
   ];
@@ -59,10 +58,8 @@ class _MainScreenState extends State<MainScreen> {
       case 1:
         return {'/category': (_) => const CategoryScreen()};
       case 2:
-        return {'/action': (_) => const ActionScreen()};
-      case 3:
         return {'/statistics': (_) => const StatisticsScreen()};
-      case 4:
+      case 3:
         return {'/settings': (_) => const SettingsScreen()};
       default:
         return {'/': (_) => const SizedBox.shrink()};
@@ -93,7 +90,7 @@ class _MainScreenState extends State<MainScreen> {
       child: Scaffold(
         body: IndexedStack(
           index: _selectedIndex,
-          children: List.generate(5, (index) {
+          children: List.generate(4, (index) {
             return Navigator(
               key: _navigatorKeys[index],
               initialRoute: _initialRoutes[index],
@@ -110,28 +107,36 @@ class _MainScreenState extends State<MainScreen> {
             );
           }),
         ),
+        floatingActionButton: _selectedIndex == 0
+            ? FloatingActionButton(
+                onPressed: () async {
+                  final selectedDate = await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ActionAddScreen()),
+                  );
+                  if (selectedDate is DateTime) {
+                    final provider = Provider.of<CalendarProvider>(
+                      context,
+                      listen: false,
+                    );
+                    provider.fetchActionsForMonth(
+                      DateTime(selectedDate.year, selectedDate.month),
+                    );
+                    provider.fetchActionsForDate(selectedDate);
+                    _setExternalSelectedDate(selectedDate);
+                  }
+                },
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
+                shape: const CircleBorder(),
+                elevation: 6,
+                tooltip: '행동 추가',
+                child: const Icon(Icons.add, size: 32),
+              )
+            : null,
         bottomNavigationBar: NavigationBar(
           selectedIndex: _selectedIndex,
-          onDestinationSelected: (index) async {
-            if (index == 2) {
-              final selectedDate = await Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const ActionAddScreen()),
-              );
-              setState(() => _selectedIndex = 0);
-              if (selectedDate is DateTime) {
-                final provider = Provider.of<CalendarProvider>(
-                  context,
-                  listen: false,
-                );
-                provider.fetchActionsForMonth(
-                  DateTime(selectedDate.year, selectedDate.month),
-                );
-                provider.fetchActionsForDate(selectedDate);
-                _setExternalSelectedDate(selectedDate);
-              }
-            } else {
-              setState(() => _selectedIndex = index);
-            }
+          onDestinationSelected: (index) {
+            setState(() => _selectedIndex = index);
           },
           backgroundColor: backgroundColor,
           indicatorColor: selectedColor.withOpacity(0.12),
@@ -146,11 +151,6 @@ class _MainScreenState extends State<MainScreen> {
               icon: Icon(Icons.category, size: 28),
               selectedIcon: Icon(Icons.category, size: 32),
               label: '카테고리',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.add_task, size: 28),
-              selectedIcon: Icon(Icons.add_task, size: 32),
-              label: '액션',
             ),
             NavigationDestination(
               icon: Icon(Icons.bar_chart, size: 28),

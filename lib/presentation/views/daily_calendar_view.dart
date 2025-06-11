@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../viewmodels/calendar_provider.dart';
 import '../action/action_edit_screen.dart';
 import 'package:flutter/widgets.dart';
+import 'package:month_action/data/models/action_model.dart';
 
 typedef DateChangedCallback = void Function(DateTime date);
 
@@ -130,13 +131,23 @@ class DailyCalendarView extends StatelessWidget {
                                     final action = actions[idx];
                                     return ListTile(
                                       title: Text(action.title),
-                                      subtitle: Text(
-                                        action.date != null
-                                            ? DateFormat(
-                                              'HH:mm',
-                                            ).format(action.date!)
-                                            : '',
-                                      ),
+                                      subtitle:
+                                          action.category ==
+                                                  CategoryType.expense
+                                              ? Text(
+                                                '${NumberFormat('#,###').format(action.amount)}원',
+                                              )
+                                              : (action
+                                                          .description
+                                                          ?.isNotEmpty ==
+                                                      true
+                                                  ? Text(
+                                                    action.description ?? '',
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  )
+                                                  : const SizedBox.shrink()),
                                       trailing: GestureDetector(
                                         behavior: HitTestBehavior.opaque,
                                         onTap: () => _toggleDone(context, idx),

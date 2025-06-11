@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/calendar_provider.dart';
 import '../action/action_edit_screen.dart';
+import 'package:month_action/data/models/action_model.dart';
 
 typedef DateChangedCallback = void Function(DateTime date);
 
@@ -96,6 +97,23 @@ class _CalendarViewState extends State<CalendarView> {
       _selectedDay = today;
     });
     widget.onDateChanged?.call(today);
+  }
+
+  Widget _buildSubtitle(action) {
+    if (action.category == CategoryType.expense) {
+      return Text('${NumberFormat('#,###').format(action.amount)}원');
+    } else if (action.category == CategoryType.todo) {
+      if (action.description?.isNotEmpty == true) {
+        return Text(
+          action.description!,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        );
+      } else {
+        return const SizedBox.shrink();
+      }
+    }
+    return const SizedBox.shrink();
   }
 
   @override
@@ -288,7 +306,7 @@ class _CalendarViewState extends State<CalendarView> {
                   final action = filtered[idx];
                   return ListTile(
                     title: Text(action.title),
-                    subtitle: Text(DateFormat('HH:mm').format(action.date!)),
+                    subtitle: _buildSubtitle(action),
                     trailing: GestureDetector(
                       onTap: () {
                         Provider.of<CalendarProvider>(

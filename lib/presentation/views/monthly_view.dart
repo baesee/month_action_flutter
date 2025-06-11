@@ -7,6 +7,7 @@ import 'weekly_calendar_view.dart';
 import 'calendar_view.dart';
 import '../action/action_edit_screen.dart';
 import 'package:flutter/widgets.dart';
+import 'package:month_action/data/models/action_model.dart';
 
 enum MonthlyListViewType { date, category }
 
@@ -79,7 +80,7 @@ class MonthlyView extends StatelessWidget {
                 ...dayActions.map(
                   (action) => ListTile(
                     title: Text(action.title),
-                    subtitle: Text(DateFormat('HH:mm').format(action.date)),
+                    subtitle: _buildSubtitle(action),
                     trailing: GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: () {
@@ -140,6 +141,23 @@ class MonthlyView extends StatelessWidget {
       map.putIfAbsent(date, () => []).add(action);
     }
     return map;
+  }
+
+  Widget _buildSubtitle(action) {
+    if (action.category == CategoryType.expense) {
+      return Text('${NumberFormat('#,###').format(action.amount)}원');
+    } else if (action.category == CategoryType.todo) {
+      if (action.description?.isNotEmpty == true) {
+        return Text(
+          action.description!,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        );
+      } else {
+        return const SizedBox.shrink();
+      }
+    }
+    return const SizedBox.shrink();
   }
 
   Widget _buildActionTile(BuildContext context, dynamic action) {
