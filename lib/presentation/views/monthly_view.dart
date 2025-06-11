@@ -36,18 +36,17 @@ class CategoryItem {
 }
 
 class MonthlyView extends StatelessWidget {
-  const MonthlyView({super.key});
+  final DateTime focusedMonth;
+  const MonthlyView({super.key, required this.focusedMonth});
 
   @override
   Widget build(BuildContext context) {
-    // build 시 현재 월 전체 데이터를 fetch
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month);
+    // build 시 선택된 월 전체 데이터를 fetch
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<CalendarProvider>(
         context,
         listen: false,
-      ).fetchActionsForMonth(currentMonth);
+      ).fetchActionsForMonth(focusedMonth);
     });
     return Consumer<CalendarProvider>(
       builder: (context, provider, _) {

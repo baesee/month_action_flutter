@@ -106,4 +106,14 @@ class ActionRepository {
         )
         .toList();
   }
+
+  // 반복 그룹 id로 여러 Action 삭제
+  Future<void> deleteActionsByRepeatGroupId(String repeatGroupId) async {
+    final box = await _openBox();
+    final toDelete =
+        box.values.where((a) => a.repeatGroupId == repeatGroupId).toList();
+    for (final a in toDelete) {
+      await box.delete(a.id);
+    }
+  }
 }

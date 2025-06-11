@@ -75,19 +75,33 @@ class CalendarProvider extends ChangeNotifier {
 
   Future<void> addAction(model.Action action) async {
     await _actionRepo.addAction(action);
-    fetchActionsForMonth(DateTime(_selectedDate.year, _selectedDate.month));
-    fetchActionsForDate(_selectedDate);
+    await fetchActionsForMonth(
+      DateTime(_selectedDate.year, _selectedDate.month),
+    );
+    await fetchActionsForDate(_selectedDate);
   }
 
   Future<void> updateAction(model.Action action) async {
     await _actionRepo.updateAction(action);
-    fetchActionsForMonth(DateTime(_selectedDate.year, _selectedDate.month));
-    fetchActionsForDate(_selectedDate);
+    await fetchActionsForMonth(
+      DateTime(_selectedDate.year, _selectedDate.month),
+    );
+    await fetchActionsForDate(_selectedDate);
   }
 
   Future<void> removeAction(String id) async {
     await _actionRepo.deleteAction(id);
-    fetchActionsForMonth(DateTime(_selectedDate.year, _selectedDate.month));
-    fetchActionsForDate(_selectedDate);
+    await fetchActionsForMonth(
+      DateTime(_selectedDate.year, _selectedDate.month),
+    );
+    await fetchActionsForDate(_selectedDate);
+  }
+
+  Future<void> deleteActionsByRepeatGroupId(String repeatGroupId) async {
+    await _actionRepo.deleteActionsByRepeatGroupId(repeatGroupId);
+    await fetchActionsForMonth(
+      DateTime(_selectedDate.year, _selectedDate.month),
+    );
+    await fetchActionsForDate(_selectedDate);
   }
 }

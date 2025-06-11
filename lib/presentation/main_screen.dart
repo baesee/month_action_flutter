@@ -6,6 +6,7 @@ import 'package:month_action/presentation/views/daily_calendar_view.dart';
 import 'package:month_action/presentation/action/action_add_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:month_action/presentation/viewmodels/calendar_provider.dart';
+import 'package:intl/intl.dart';
 // TODO: MonthlyView(월간), StatisticsScreen, SettingsScreen 파일도 준비/연결
 
 class MainScreen extends StatefulWidget {
@@ -25,8 +26,12 @@ class _MainScreenState extends State<MainScreen> {
   // 외부에서 월간 탭의 날짜를 강제로 바꿀 때 사용
   DateTime? _externalSelectedDate;
   void _setExternalSelectedDate(DateTime date) {
-    setState(() {
-      _externalSelectedDate = date;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _externalSelectedDate = date;
+        });
+      }
     });
   }
 
@@ -112,20 +117,18 @@ class _MainScreenState extends State<MainScreen> {
               final selectedDate = await Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const ActionAddScreen()),
               );
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                setState(() => _selectedIndex = 0);
-                if (selectedDate is DateTime) {
-                  final provider = Provider.of<CalendarProvider>(
-                    context,
-                    listen: false,
-                  );
-                  provider.fetchActionsForMonth(
-                    DateTime(selectedDate.year, selectedDate.month),
-                  );
-                  provider.fetchActionsForDate(selectedDate);
-                  _setExternalSelectedDate(selectedDate);
-                }
-              });
+              setState(() => _selectedIndex = 0);
+              if (selectedDate is DateTime) {
+                final provider = Provider.of<CalendarProvider>(
+                  context,
+                  listen: false,
+                );
+                provider.fetchActionsForMonth(
+                  DateTime(selectedDate.year, selectedDate.month),
+                );
+                provider.fetchActionsForDate(selectedDate);
+                _setExternalSelectedDate(selectedDate);
+              }
             } else {
               setState(() => _selectedIndex = index);
             }
@@ -268,10 +271,14 @@ class _MonthlyTabScreenState extends State<MonthlyTabScreen>
   DateTime _selectedDate = DateTime.now();
   late TabController _tabController;
 
+  // 월간 탭용 월 네비게이터 상태
+  DateTime _focusedMonth = DateTime.now();
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: _tabs.length, vsync: this);
+    _focusedMonth = DateTime(_selectedDate.year, _selectedDate.month);
   }
 
   @override
@@ -280,23 +287,61 @@ class _MonthlyTabScreenState extends State<MonthlyTabScreen>
     // 외부에서 날짜가 지정되면 동기화
     if (widget.externalSelectedDate != null &&
         widget.externalSelectedDate != _selectedDate) {
-      setState(() {
-        _selectedDate = widget.externalSelectedDate!;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _selectedDate = widget.externalSelectedDate!;
+          });
+          widget.onExternalDateSelected?.call();
+        }
       });
-      widget.onExternalDateSelected?.call();
     }
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  void _goToPrevMonth() {
+    setState(() {
+      _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month - 1);
+    });
+  }
+
+  void _goToNextMonth() {
+    setState(() {
+      _focusedMonth = DateTime(_focusedMonth.year, _focusedMonth.month + 1);
+    });
+  }
+
+  void _goToToday() {
+    final now = DateTime.now();
+    setState(() {
+      _focusedMonth = DateTime(now.year, now.month);
+    });
+  }
+
+  Future<void> _pickMonth() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _focusedMonth,
+      firstDate: DateTime(2020, 1),
+      lastDate: DateTime(2100, 12),
+      locale: const Locale('ko'),
+    );
+    if (picked != null) {
+      setState(() {
+        _focusedMonth = DateTime(picked.year, picked.month);
+      });
+    }
   }
 
   void _onDateChanged(DateTime date) {
     setState(() {
       _selectedDate = date;
     });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -326,7 +371,42 @@ class _MonthlyTabScreenState extends State<MonthlyTabScreen>
               selectedDate: _selectedDate,
               onDateChanged: _onDateChanged,
             ),
-            MonthlyView(),
+            // 월간 탭: 상단에 월 네비게이터 Row 추가, MonthlyView에 focusedMonth 전달
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.chevron_left),
+                        onPressed: _goToPrevMonth,
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: _pickMonth,
+                          child: Center(
+                            child: Text(
+                              DateFormat('yyyy년 M월', 'ko').format(_focusedMonth),
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.chevron_right),
+                        onPressed: _goToNextMonth,
+                      ),
+                      IconButton(icon: const Icon(Icons.today), onPressed: _goToToday),
+                    ],
+                  ),
+                ),
+                Expanded(child: MonthlyView(focusedMonth: _focusedMonth)),
+              ],
+            ),
             CalendarView(
               selectedDate: _selectedDate,
               onDateChanged: _onDateChanged,

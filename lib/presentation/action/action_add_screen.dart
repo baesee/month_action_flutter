@@ -77,25 +77,92 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
     if (!_formKey.currentState!.validate()) return;
     final title = _titleController.text.trim();
     final desc = _descController.text.trim();
-    final newAction = model.Action(
-      id: const Uuid().v4(),
-      title: title,
-      description: desc.isEmpty ? null : desc,
-      category: _selectedCategory,
-      date: _selectedDate,
-      repeatType: _selectedRepeatType,
-      pushSchedules: _selectedPushSchedules,
-      done: false,
-      amount: _selectedCategory == model.CategoryType.expense ? _amount : 0,
-    );
+    final repeatType = _selectedRepeatType;
+    final pushSchedules = List<model.PushSchedule>.from(_selectedPushSchedules);
+    final amount =
+        _selectedCategory == model.CategoryType.expense ? _amount : 0;
     final calendarProvider = Provider.of<CalendarProvider>(
       context,
       listen: false,
     );
-    await calendarProvider.addAction(newAction);
-    if (mounted) {
-      Navigator.pop(context, _selectedDate);
+
+    if (repeatType != null) {
+      final repeatGroupId = const Uuid().v4();
+      final dates = _generateRepeatDates(_selectedDate, repeatType);
+      final futures = <Future>[];
+      for (final date in dates) {
+        final action = model.Action(
+          id: const Uuid().v4(),
+          title: title,
+          description: desc.isEmpty ? null : desc,
+          category: _selectedCategory,
+          date: date,
+          repeatType: repeatType,
+          pushSchedules: pushSchedules,
+          done: false,
+          amount: amount,
+          repeatGroupId: repeatGroupId,
+        );
+        futures.add(calendarProvider.addAction(action));
+      }
+      await Future.wait(futures);
+    } else {
+      final action = model.Action(
+        id: const Uuid().v4(),
+        title: title,
+        description: desc.isEmpty ? null : desc,
+        category: _selectedCategory,
+        date: _selectedDate,
+        repeatType: null,
+        pushSchedules: pushSchedules,
+        done: false,
+        amount: amount,
+        repeatGroupId: null,
+      );
+      await calendarProvider.addAction(action);
     }
+    if (mounted) {
+      Future.microtask(() => Navigator.pop(context, _selectedDate));
+    }
+  }
+
+  List<DateTime> _generateRepeatDates(DateTime start, model.RepeatType type) {
+    final List<DateTime> dates = [];
+    switch (type) {
+      case model.RepeatType.weekly:
+        // 최대 12개월(52주) 이내, 같은 요일
+        for (int i = 0; i < 52; i++) {
+          final d = start.add(Duration(days: 7 * i));
+          if (d.difference(start).inDays > 365) break;
+          dates.add(d);
+        }
+        break;
+      case model.RepeatType.monthly:
+        // 최대 12개월, 같은 일자
+        for (int i = 0; i < 12; i++) {
+          final d = DateTime(start.year, start.month + i, start.day);
+          if (d.difference(start).inDays > 365) break;
+          dates.add(d);
+        }
+        break;
+      case model.RepeatType.quarterly:
+        // 최대 24개월, 3개월마다
+        for (int i = 0; i < 24; i += 3) {
+          final d = DateTime(start.year, start.month + i, start.day);
+          if (d.difference(start).inDays > 730) break;
+          dates.add(d);
+        }
+        break;
+      case model.RepeatType.halfYearly:
+        // 최대 24개월, 6개월마다
+        for (int i = 0; i < 24; i += 6) {
+          final d = DateTime(start.year, start.month + i, start.day);
+          if (d.difference(start).inDays > 730) break;
+          dates.add(d);
+        }
+        break;
+    }
+    return dates;
   }
 
   @override

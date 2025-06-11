@@ -58,4 +58,14 @@ class ActionViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> deleteActionsByRepeatGroupId(String repeatGroupId) async {
+    try {
+      await _repository.deleteActionsByRepeatGroupId(repeatGroupId);
+      await loadActions();
+    } catch (e) {
+      _error = '반복 액션 삭제 실패: $e';
+      notifyListeners();
+    }
+  }
 }

@@ -112,6 +112,33 @@ class _ActionEditScreenState extends State<ActionEditScreen> {
       context,
       listen: false,
     );
+    final repeatGroupId = widget.action.repeatGroupId;
+    if (repeatGroupId != null) {
+      final result = await showDialog<bool>(
+        context: context,
+        builder:
+            (ctx) => AlertDialog(
+              title: const Text('반복 행동 삭제'),
+              content: const Text('이 행동은 반복 등록된 일정입니다.\n반복 등록된 모든 일정을 삭제할까요?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('아니오'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('네, 모두 삭제'),
+                ),
+              ],
+            ),
+      );
+      if (result == true) {
+        await calendarProvider.deleteActionsByRepeatGroupId(repeatGroupId);
+        if (mounted) Navigator.pop(context, true);
+        return;
+      }
+    }
+    // 반복 없음 또는 '아니오' 선택 시 단일 삭제
     await calendarProvider.removeAction(widget.action.id);
     if (mounted) {
       Navigator.pop(context, true);

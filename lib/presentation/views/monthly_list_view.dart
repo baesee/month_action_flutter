@@ -35,93 +35,110 @@ class CategoryItem {
   CategoryItem({required this.id, required this.name});
 }
 
-class MonthlyView extends StatelessWidget {
-  const MonthlyView({super.key});
+class MonthlyView extends StatefulWidget {
+  final DateTime focusedMonth;
+  const MonthlyView({super.key, required this.focusedMonth});
 
   @override
-  Widget build(BuildContext context) {
-    // build 시 현재 월 전체 데이터를 fetch
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+  State<MonthlyView> createState() => _MonthlyViewState();
+}
+
+class _MonthlyViewState extends State<MonthlyView> {
+  @override
+  void didUpdateWidget(covariant MonthlyView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.focusedMonth != widget.focusedMonth) {
       Provider.of<CalendarProvider>(
         context,
         listen: false,
-      ).fetchActionsForMonth(currentMonth);
-    });
-    return Consumer<CalendarProvider>(
-      builder: (context, provider, _) {
-        final actions = provider.monthActions;
-        final grouped = groupByDate(actions);
-        final sortedDates = grouped.keys.toList()..sort();
-        if (sortedDates.isEmpty) {
-          return const Center(child: Text('데이터가 없습니다.'));
-        }
-        return ListView.builder(
-          itemCount: sortedDates.length,
-          itemBuilder: (context, idx) {
-            final date = sortedDates[idx];
-            final dayActions = grouped[date]!;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  color: Colors.grey[200],
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 6,
-                    horizontal: 16,
-                  ),
-                  child: Text(
-                    DateFormat('yyyy-MM-dd (E)', 'ko').format(date),
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                ...dayActions.map(
-                  (action) => ListTile(
-                    title: Text(action.title),
-                    subtitle: Text(DateFormat('HH:mm').format(action.date)),
-                    trailing: GestureDetector(
-                      onTap: () {
-                        Provider.of<CalendarProvider>(
-                          context,
-                          listen: false,
-                        ).updateAction(action.copyWith(done: !action.done));
-                      },
-                      child: Container(
-                        width: 48,
-                        alignment: Alignment.center,
-                        child: Icon(
-                          action.done
-                              ? Icons.check_circle
-                              : Icons.radio_button_unchecked,
-                          color: action.done ? Colors.green : Colors.grey,
+      ).fetchActionsForMonth(widget.focusedMonth);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final monthStr = DateFormat('yyyy년 M월', 'ko').format(widget.focusedMonth);
+    return Column(
+      children: [
+        Expanded(
+          child: Consumer<CalendarProvider>(
+            builder: (context, provider, _) {
+              final actions = provider.monthActions;
+              final grouped = groupByDate(actions);
+              final sortedDates = grouped.keys.toList()..sort();
+              if (sortedDates.isEmpty) {
+                return const Center(child: Text('데이터가 없습니다.'));
+              }
+              return ListView.builder(
+                itemCount: sortedDates.length,
+                itemBuilder: (context, idx) {
+                  final date = sortedDates[idx];
+                  final dayActions = grouped[date]!;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        color: Colors.grey[200],
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 6,
+                          horizontal: 16,
+                        ),
+                        child: Text(
+                          DateFormat('yyyy-MM-dd (E)', 'ko').format(date),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
-                    ),
-                    onTap: () async {
-                      final result = await Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => ActionEditScreen(action: action),
+                      ...dayActions.map(
+                        (action) => ListTile(
+                          title: Text(action.title),
+                          subtitle: Text(
+                            DateFormat('HH:mm').format(action.date),
+                          ),
+                          trailing: GestureDetector(
+                            onTap: () {
+                              Provider.of<CalendarProvider>(
+                                context,
+                                listen: false,
+                              ).updateAction(
+                                action.copyWith(done: !action.done),
+                              );
+                            },
+                            child: Container(
+                              width: 48,
+                              alignment: Alignment.center,
+                              child: Icon(
+                                action.done
+                                    ? Icons.check_circle
+                                    : Icons.radio_button_unchecked,
+                                color: action.done ? Colors.green : Colors.grey,
+                              ),
+                            ),
+                          ),
+                          onTap: () async {
+                            final result = await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder:
+                                    (_) => ActionEditScreen(action: action),
+                              ),
+                            );
+                            if (result == true) {
+                              Provider.of<CalendarProvider>(
+                                context,
+                                listen: false,
+                              ).fetchActionsForMonth(widget.focusedMonth);
+                            }
+                          },
                         ),
-                      );
-                      if (result == true) {
-                        final now = DateTime.now();
-                        final currentMonth = DateTime(now.year, now.month);
-                        final provider = Provider.of<CalendarProvider>(
-                          context,
-                          listen: false,
-                        );
-                        provider.fetchActionsForMonth(currentMonth);
-                      }
-                    },
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

@@ -66,6 +66,9 @@ class Action extends HiveObject {
   @HiveField(8)
   int amount;
 
+  @HiveField(9)
+  String? repeatGroupId;
+
   // 생성자
   Action({
     required this.id,
@@ -77,6 +80,7 @@ class Action extends HiveObject {
     this.pushSchedules = const [PushSchedule.sameDay],
     this.done = false,
     this.amount = 0,
+    this.repeatGroupId,
   });
 
   factory Action.fromJson(Map<String, dynamic> json) => Action(
@@ -105,6 +109,7 @@ class Action extends HiveObject {
         [PushSchedule.sameDay],
     done: json['done'] as bool? ?? false,
     amount: json['amount'] as int? ?? 0,
+    repeatGroupId: json['repeatGroupId'] as String?,
   );
 
   Map<String, dynamic> toJson() => {
@@ -117,6 +122,7 @@ class Action extends HiveObject {
     'pushSchedules': pushSchedules.map((e) => e.name).toList(),
     'done': done,
     'amount': amount,
+    'repeatGroupId': repeatGroupId,
   };
 
   Action copyWith({
@@ -129,6 +135,7 @@ class Action extends HiveObject {
     List<PushSchedule>? pushSchedules,
     bool? done,
     int? amount,
+    String? repeatGroupId,
   }) {
     return Action(
       id: id ?? this.id,
@@ -140,6 +147,7 @@ class Action extends HiveObject {
       pushSchedules: pushSchedules ?? this.pushSchedules,
       done: done ?? this.done,
       amount: amount ?? this.amount,
+      repeatGroupId: repeatGroupId ?? this.repeatGroupId,
     );
   }
 }
