@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../data/models/action_model.dart' as model;
 import '../../data/repositories/action_repository.dart';
+import '../../data/repositories/action_history_repository.dart';
+import '../../data/models/action_history_model.dart' as history_model;
 
 class CalendarProvider extends ChangeNotifier {
   DateTime _selectedDate = DateTime.now();
@@ -16,6 +18,7 @@ class CalendarProvider extends ChangeNotifier {
   String? get error => _error;
 
   final ActionRepository _actionRepo = ActionRepository();
+  final ActionHistoryRepository _actionHistoryRepo = ActionHistoryRepository();
 
   CalendarProvider() {
     fetchActionsForMonth(DateTime(_selectedDate.year, _selectedDate.month));
@@ -92,7 +95,29 @@ class CalendarProvider extends ChangeNotifier {
     DateTime? weekStart,
     DateTime? weekEnd,
   }) async {
+    final prev = await _actionRepo.getAction(action.id);
+    final prevDone = prev?.done ?? false;
     await _actionRepo.updateAction(action);
+    if (prevDone != action.done) {
+      if (action.done) {
+        final history = history_model.ActionHistory(
+          id: UniqueKey().toString(),
+          actionId: action.id,
+          completedAt: DateTime.now(),
+        );
+        await _actionHistoryRepo.addActionHistory(history);
+        debugPrint('[ActionHistory] 완료 이력 추가: ${action.id}');
+      } else {
+        final histories = await _actionHistoryRepo.getHistoriesByActionId(
+          action.id,
+        );
+        if (histories.isNotEmpty) {
+          histories.sort((a, b) => b.completedAt.compareTo(a.completedAt));
+          await _actionHistoryRepo.deleteActionHistory(histories.first.id);
+          debugPrint('[ActionHistory] 완료 이력 삭제(Undo): ${action.id}');
+        }
+      }
+    }
     if (month != null) {
       await fetchActionsForMonth(month);
     }
@@ -106,6 +131,10 @@ class CalendarProvider extends ChangeNotifier {
 
   Future<void> removeAction(String id, {DateTime? month}) async {
     await _actionRepo.deleteAction(id);
+    final histories = await _actionHistoryRepo.getHistoriesByActionId(id);
+    for (final h in histories) {
+      await _actionHistoryRepo.deleteActionHistory(h.id);
+    }
     if (month != null) {
       await fetchActionsForMonth(month);
     } else {

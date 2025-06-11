@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import '../models/action_history_model.dart' as model;
 import 'package:flutter/foundation.dart';
+import '../models/action_model.dart' as model_action;
 
 class ActionHistoryRepository {
   static const String boxName = 'action_histories';
@@ -78,5 +79,55 @@ class ActionHistoryRepository {
       debugPrint('ActionHistoryRepository error: $e\n$s');
       return null;
     }
+  }
+
+  // 특정 ActionId + 기간별 이력 조회
+  Future<List<model.ActionHistory>> getHistoryForAction(
+    String actionId, {
+    DateTime? start,
+    DateTime? end,
+  }) async {
+    final box = await _openBox();
+    return box.values.where((h) {
+      if (h.actionId != actionId) return false;
+      if (start != null && h.completedAt.isBefore(start)) return false;
+      if (end != null && h.completedAt.isAfter(end)) return false;
+      return true;
+    }).toList();
+  }
+
+  // 월별 이력 조회
+  Future<List<model.ActionHistory>> getHistoryForMonth(
+    int year,
+    int month,
+  ) async {
+    final box = await _openBox();
+    return box.values
+        .where(
+          (h) => h.completedAt.year == year && h.completedAt.month == month,
+        )
+        .toList();
+  }
+
+  // 카테고리별 + 기간별 이력 조회 (ActionRepository 필요)
+  Future<List<model.ActionHistory>> getHistoryByCategory(
+    String categoryId, {
+    DateTime? start,
+    DateTime? end,
+    required Future<List<model_action.Action>> Function() getAllActions,
+  }) async {
+    final box = await _openBox();
+    final actions = await getAllActions();
+    final actionIds =
+        actions
+            .where((a) => a.category.name == categoryId)
+            .map((a) => a.id)
+            .toSet();
+    return box.values.where((h) {
+      if (!actionIds.contains(h.actionId)) return false;
+      if (start != null && h.completedAt.isBefore(start)) return false;
+      if (end != null && h.completedAt.isAfter(end)) return false;
+      return true;
+    }).toList();
   }
 }

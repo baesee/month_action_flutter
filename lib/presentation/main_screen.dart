@@ -7,6 +7,7 @@ import 'package:month_action/presentation/action/action_add_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:month_action/presentation/viewmodels/calendar_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:month_action/presentation/views/statistics_screen.dart';
 // TODO: MonthlyView(월간), StatisticsScreen, SettingsScreen 파일도 준비/연결
 
 class MainScreen extends StatefulWidget {
@@ -107,32 +108,35 @@ class _MainScreenState extends State<MainScreen> {
             );
           }),
         ),
-        floatingActionButton: _selectedIndex == 0
-            ? FloatingActionButton(
-                onPressed: () async {
-                  final selectedDate = await Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ActionAddScreen()),
-                  );
-                  if (selectedDate is DateTime) {
-                    final provider = Provider.of<CalendarProvider>(
-                      context,
-                      listen: false,
+        floatingActionButton:
+            _selectedIndex == 0
+                ? FloatingActionButton(
+                  onPressed: () async {
+                    final selectedDate = await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ActionAddScreen(),
+                      ),
                     );
-                    provider.fetchActionsForMonth(
-                      DateTime(selectedDate.year, selectedDate.month),
-                    );
-                    provider.fetchActionsForDate(selectedDate);
-                    _setExternalSelectedDate(selectedDate);
-                  }
-                },
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-                shape: const CircleBorder(),
-                elevation: 6,
-                tooltip: '행동 추가',
-                child: const Icon(Icons.add, size: 32),
-              )
-            : null,
+                    if (selectedDate is DateTime) {
+                      final provider = Provider.of<CalendarProvider>(
+                        context,
+                        listen: false,
+                      );
+                      provider.fetchActionsForMonth(
+                        DateTime(selectedDate.year, selectedDate.month),
+                      );
+                      provider.fetchActionsForDate(selectedDate);
+                      _setExternalSelectedDate(selectedDate);
+                    }
+                  },
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  shape: const CircleBorder(),
+                  elevation: 6,
+                  tooltip: '행동 추가',
+                  child: const Icon(Icons.add, size: 32),
+                )
+                : null,
         bottomNavigationBar: NavigationBar(
           selectedIndex: _selectedIndex,
           onDestinationSelected: (index) {
@@ -205,26 +209,6 @@ class ActionScreen extends StatelessWidget {
       ),
       body: const Center(
         child: Text('액션 관리 화면입니다.', style: TextStyle(fontSize: 18)),
-      ),
-    );
-  }
-}
-
-// 4. 통계
-class StatisticsScreen extends StatelessWidget {
-  const StatisticsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final canPop = ModalRoute.of(context)?.canPop ?? false;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('통계11'),
-        automaticallyImplyLeading: false,
-        leading: canPop ? null : const BackButton(),
-      ),
-      body: const Center(
-        child: Text('메인 화면입니다.', style: TextStyle(fontSize: 18)),
       ),
     );
   }
@@ -375,7 +359,10 @@ class _MonthlyTabScreenState extends State<MonthlyTabScreen>
             Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 12,
+                  ),
                   child: Row(
                     children: [
                       IconButton(
@@ -387,7 +374,10 @@ class _MonthlyTabScreenState extends State<MonthlyTabScreen>
                           onTap: _pickMonth,
                           child: Center(
                             child: Text(
-                              DateFormat('yyyy년 M월', 'ko').format(_focusedMonth),
+                              DateFormat(
+                                'yyyy년 M월',
+                                'ko',
+                              ).format(_focusedMonth),
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -400,7 +390,10 @@ class _MonthlyTabScreenState extends State<MonthlyTabScreen>
                         icon: const Icon(Icons.chevron_right),
                         onPressed: _goToNextMonth,
                       ),
-                      IconButton(icon: const Icon(Icons.today), onPressed: _goToToday),
+                      IconButton(
+                        icon: const Icon(Icons.today),
+                        onPressed: _goToToday,
+                      ),
                     ],
                   ),
                 ),

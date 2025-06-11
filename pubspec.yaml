@@ -47,6 +47,7 @@ dependencies:
     hive_generator: ^2.0.1
     build_runner: ^2.4.15
     uuid: ^4.3.3
+    fl_chart: ^0.66.0
 
 dev_dependencies:
     flutter_test:

@@ -25,13 +25,15 @@ class ActionAdapter extends TypeAdapter<Action> {
       repeatType: fields[5] as RepeatType?,
       pushSchedules: (fields[6] as List).cast<PushSchedule>(),
       done: fields[7] as bool,
+      amount: fields[8] as int,
+      repeatGroupId: fields[9] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Action obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -47,7 +49,11 @@ class ActionAdapter extends TypeAdapter<Action> {
       ..writeByte(6)
       ..write(obj.pushSchedules)
       ..writeByte(7)
-      ..write(obj.done);
+      ..write(obj.done)
+      ..writeByte(8)
+      ..write(obj.amount)
+      ..writeByte(9)
+      ..write(obj.repeatGroupId);
   }
 
   @override
