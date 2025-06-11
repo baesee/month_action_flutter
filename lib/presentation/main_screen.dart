@@ -112,20 +112,20 @@ class _MainScreenState extends State<MainScreen> {
               final selectedDate = await Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const ActionAddScreen()),
               );
-              setState(() => _selectedIndex = 0);
-              if (selectedDate is DateTime) {
-                final provider = Provider.of<CalendarProvider>(
-                  context,
-                  listen: false,
-                );
-                provider.fetchActionsForMonth(
-                  DateTime(selectedDate.year, selectedDate.month),
-                );
-                provider.fetchActionsForDate(selectedDate);
-                WidgetsBinding.instance.addPostFrameCallback((_) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                setState(() => _selectedIndex = 0);
+                if (selectedDate is DateTime) {
+                  final provider = Provider.of<CalendarProvider>(
+                    context,
+                    listen: false,
+                  );
+                  provider.fetchActionsForMonth(
+                    DateTime(selectedDate.year, selectedDate.month),
+                  );
+                  provider.fetchActionsForDate(selectedDate);
                   _setExternalSelectedDate(selectedDate);
-                });
-              }
+                }
+              });
             } else {
               setState(() => _selectedIndex = index);
             }
@@ -264,7 +264,7 @@ class MonthlyTabScreen extends StatefulWidget {
 
 class _MonthlyTabScreenState extends State<MonthlyTabScreen>
     with SingleTickerProviderStateMixin {
-  final List<String> _tabs = ['일간', '주간', '월간(리스트)', '월간(캘린더)'];
+  final List<String> _tabs = ['일간', '주간', '월간', '달력'];
   DateTime _selectedDate = DateTime.now();
   late TabController _tabController;
 

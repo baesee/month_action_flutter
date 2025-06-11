@@ -192,9 +192,10 @@ class _CalendarViewState extends State<CalendarView> {
                   actions
                       .where(
                         (a) =>
-                            a.date.year == day.year &&
-                            a.date.month == day.month &&
-                            a.date.day == day.day,
+                            a.date != null &&
+                            a.date!.year == day.year &&
+                            a.date!.month == day.month &&
+                            a.date!.day == day.day,
                       )
                       .length;
               if (count == 0) return null;
@@ -270,9 +271,11 @@ class _CalendarViewState extends State<CalendarView> {
                   actions
                       .where(
                         (a) =>
-                            a.date.year == _selectedDay?.year &&
-                            a.date.month == _selectedDay?.month &&
-                            a.date.day == _selectedDay?.day,
+                            a.date != null &&
+                            _selectedDay != null &&
+                            a.date!.year == _selectedDay!.year &&
+                            a.date!.month == _selectedDay!.month &&
+                            a.date!.day == _selectedDay!.day,
                       )
                       .toList();
               if (filtered.isEmpty) {
@@ -287,7 +290,11 @@ class _CalendarViewState extends State<CalendarView> {
                   final action = filtered[idx];
                   return ListTile(
                     title: Text(action.title),
-                    subtitle: Text(DateFormat('HH:mm').format(action.date)),
+                    subtitle: Text(
+                      action.date != null
+                          ? DateFormat('HH:mm').format(action.date!)
+                          : '',
+                    ),
                     trailing: GestureDetector(
                       onTap: () {
                         Provider.of<CalendarProvider>(

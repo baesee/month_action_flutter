@@ -49,9 +49,10 @@ class ActionRepository {
     return box.values
         .where(
           (a) =>
-              a.date.year == date.year &&
-              a.date.month == date.month &&
-              a.date.day == date.day,
+              a.date != null &&
+              a.date!.year == date.year &&
+              a.date!.month == date.month &&
+              a.date!.day == date.day,
         )
         .toList();
   }
@@ -61,6 +62,7 @@ class ActionRepository {
     final box = await _openBox();
     return box.values.where((a) {
       final d = a.date;
+      if (d == null) return false;
       return !d.isBefore(start) && !d.isAfter(end);
     }).toList();
   }
@@ -68,8 +70,8 @@ class ActionRepository {
   // 정렬: 날짜순
   Future<List<Action>> getActionsSortedByDate({bool descending = false}) async {
     final box = await _openBox();
-    final list = box.values.toList();
-    list.sort((a, b) => a.date.compareTo(b.date));
+    final list = box.values.where((a) => a.date != null).toList();
+    list.sort((a, b) => a.date!.compareTo(b.date!));
     if (descending) {
       return list.reversed.toList();
     }
@@ -96,7 +98,12 @@ class ActionRepository {
   Future<List<Action>> getActionsByMonth(DateTime month) async {
     final box = await _openBox();
     return box.values
-        .where((a) => a.date.year == month.year && a.date.month == month.month)
+        .where(
+          (a) =>
+              a.date != null &&
+              a.date!.year == month.year &&
+              a.date!.month == month.month,
+        )
         .toList();
   }
 }

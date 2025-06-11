@@ -128,7 +128,11 @@ class DailyCalendarView extends StatelessWidget {
                                     return ListTile(
                                       title: Text(action.title),
                                       subtitle: Text(
-                                        DateFormat('HH:mm').format(action.date),
+                                        action.date != null
+                                            ? DateFormat(
+                                              'HH:mm',
+                                            ).format(action.date!)
+                                            : '',
                                       ),
                                       trailing: GestureDetector(
                                         onTap: () => _toggleDone(context, idx),

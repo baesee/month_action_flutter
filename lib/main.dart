@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
-import 'data/models/action_model.dart';
+import 'data/models/action_model.dart' as model;
 import 'data/models/category_model.dart';
 import 'data/models/notification_model.dart';
 import 'data/models/action_history_model.dart';
@@ -21,10 +21,34 @@ void main() async {
     final appDocumentDir = await getApplicationDocumentsDirectory();
     Hive.init(appDocumentDir.path);
   }
-  Hive.registerAdapter(ActionAdapter());
+  Hive.registerAdapter(model.ActionAdapter());
+  Hive.registerAdapter(model.CategoryTypeAdapter());
+  Hive.registerAdapter(model.RepeatTypeAdapter());
+  Hive.registerAdapter(model.PushScheduleAdapter());
   Hive.registerAdapter(CategoryAdapter());
   Hive.registerAdapter(NotificationAdapter());
   Hive.registerAdapter(ActionHistoryAdapter());
+
+  // 마이그레이션 코드: 기존 actions 박스 데이터 타입 보정
+  try {
+    final box = await Hive.openBox<model.Action>('actions');
+    for (var action in box.values) {
+      // category 타입이 잘못된 경우(CategoryType이 아니면)
+      if (action.repeatType != null && action.repeatType is! model.RepeatType) {
+        action.repeatType = null;
+      }
+      if (action.pushSchedules.isEmpty) {
+        action.pushSchedules = [model.PushSchedule.sameDay];
+      }
+      await action.save();
+    }
+  } catch (e, st) {
+    print('Hive 마이그레이션 오류:');
+    print(e);
+    print(st);
+    // 앱은 계속 실행
+  }
+
   runApp(const MyApp());
 }
 
