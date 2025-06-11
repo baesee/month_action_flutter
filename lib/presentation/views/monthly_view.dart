@@ -81,11 +81,15 @@ class MonthlyView extends StatelessWidget {
                     title: Text(action.title),
                     subtitle: Text(DateFormat('HH:mm').format(action.date)),
                     trailing: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
                       onTap: () {
                         Provider.of<CalendarProvider>(
                           context,
                           listen: false,
-                        ).updateAction(action.copyWith(done: !action.done));
+                        ).updateAction(
+                          action.copyWith(done: !action.done),
+                          month: focusedMonth,
+                        );
                       },
                       child: Container(
                         width: 48,
@@ -108,13 +112,11 @@ class MonthlyView extends StatelessWidget {
                         ),
                       );
                       if (result == true) {
-                        final now = DateTime.now();
-                        final currentMonth = DateTime(now.year, now.month);
                         final provider = Provider.of<CalendarProvider>(
                           context,
                           listen: false,
                         );
-                        provider.fetchActionsForMonth(currentMonth);
+                        provider.fetchActionsForMonth(focusedMonth);
                       }
                     },
                   ),
@@ -157,11 +159,17 @@ class MonthlyView extends StatelessWidget {
         action.done ? Icons.check_circle : Icons.radio_button_unchecked,
         color: action.done ? Colors.green : Colors.grey,
       ),
-      onTap: () {
-        Provider.of<CalendarProvider>(
-          context,
-          listen: false,
-        ).updateAction(action.copyWith(done: !action.done));
+      onTap: () async {
+        final result = await Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute(builder: (_) => ActionEditScreen(action: action)),
+        );
+        if (result == true) {
+          final provider = Provider.of<CalendarProvider>(
+            context,
+            listen: false,
+          );
+          provider.fetchActionsForMonth(focusedMonth);
+        }
       },
     );
   }

@@ -187,9 +187,8 @@ class _CalendarViewState extends State<CalendarView> {
                 context,
                 listen: false,
               );
-              final actions = provider.monthActions;
-              final count =
-                  actions
+              final actions =
+                  provider.monthActions
                       .where(
                         (a) =>
                             a.date != null &&
@@ -197,60 +196,52 @@ class _CalendarViewState extends State<CalendarView> {
                             a.date!.month == day.month &&
                             a.date!.day == day.day,
                       )
-                      .length;
-              if (count == 0) return null;
-              if (count <= 5) {
-                return Positioned(
-                  bottom: 1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      count,
-                      (i) => Container(
-                        width: 6,
-                        height: 6,
-                        margin: const EdgeInsets.symmetric(horizontal: 1),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
+                      .toList();
+
+              if (actions.isEmpty) return null;
+
+              // 최대 5개까지 점 표시, 6개 이상이면 +N
+              final dots =
+                  actions.take(5).map((action) {
+                    final color =
+                        action.category.toString() == 'CategoryType.expense'
+                            ? Colors.red
+                            : Colors.blue;
+                    return Container(
+                      width: 6,
+                      height: 6,
+                      margin: const EdgeInsets.symmetric(horizontal: 1),
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    );
+                  }).toList();
+
+              if (actions.length > 5) {
+                dots.removeRange(4, dots.length); // 4개만 남기고
+                dots.add(
+                  Container(
+                    margin: const EdgeInsets.only(left: 2),
+                    child: Text(
+                      '+${actions.length - 4}',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 );
-              } else {
-                return Positioned(
-                  bottom: 1,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ...List.generate(
-                        4,
-                        (i) => Container(
-                          width: 6,
-                          height: 6,
-                          margin: const EdgeInsets.symmetric(horizontal: 1),
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.only(left: 2),
-                        child: Text(
-                          '+${count - 4}',
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
               }
+
+              return Positioned(
+                bottom: 1,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: dots,
+                ),
+              );
             },
           ),
         ),
@@ -296,11 +287,16 @@ class _CalendarViewState extends State<CalendarView> {
                           : '',
                     ),
                     trailing: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
                       onTap: () {
                         Provider.of<CalendarProvider>(
                           context,
                           listen: false,
-                        ).updateAction(action.copyWith(done: !action.done));
+                        ).updateAction(
+                          action.copyWith(done: !action.done),
+                          date: _selectedDay,
+                          month: _focusedDay,
+                        );
                       },
                       child: Container(
                         width: 48,

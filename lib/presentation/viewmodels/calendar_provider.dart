@@ -73,35 +73,61 @@ class CalendarProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> addAction(model.Action action) async {
+  Future<void> addAction(model.Action action, {DateTime? month}) async {
     await _actionRepo.addAction(action);
-    await fetchActionsForMonth(
-      DateTime(_selectedDate.year, _selectedDate.month),
-    );
+    if (month != null) {
+      await fetchActionsForMonth(month);
+    } else {
+      await fetchActionsForMonth(
+        DateTime(_selectedDate.year, _selectedDate.month),
+      );
+    }
     await fetchActionsForDate(_selectedDate);
   }
 
-  Future<void> updateAction(model.Action action) async {
+  Future<void> updateAction(
+    model.Action action, {
+    DateTime? month,
+    DateTime? date,
+    DateTime? weekStart,
+    DateTime? weekEnd,
+  }) async {
     await _actionRepo.updateAction(action);
-    await fetchActionsForMonth(
-      DateTime(_selectedDate.year, _selectedDate.month),
-    );
-    await fetchActionsForDate(_selectedDate);
+    if (month != null) {
+      await fetchActionsForMonth(month);
+    }
+    if (weekStart != null && weekEnd != null) {
+      await fetchActionsForWeek(weekStart, weekEnd);
+    }
+    if (date != null) {
+      await fetchActionsForDate(date);
+    }
   }
 
-  Future<void> removeAction(String id) async {
+  Future<void> removeAction(String id, {DateTime? month}) async {
     await _actionRepo.deleteAction(id);
-    await fetchActionsForMonth(
-      DateTime(_selectedDate.year, _selectedDate.month),
-    );
+    if (month != null) {
+      await fetchActionsForMonth(month);
+    } else {
+      await fetchActionsForMonth(
+        DateTime(_selectedDate.year, _selectedDate.month),
+      );
+    }
     await fetchActionsForDate(_selectedDate);
   }
 
-  Future<void> deleteActionsByRepeatGroupId(String repeatGroupId) async {
+  Future<void> deleteActionsByRepeatGroupId(
+    String repeatGroupId, {
+    DateTime? month,
+  }) async {
     await _actionRepo.deleteActionsByRepeatGroupId(repeatGroupId);
-    await fetchActionsForMonth(
-      DateTime(_selectedDate.year, _selectedDate.month),
-    );
+    if (month != null) {
+      await fetchActionsForMonth(month);
+    } else {
+      await fetchActionsForMonth(
+        DateTime(_selectedDate.year, _selectedDate.month),
+      );
+    }
     await fetchActionsForDate(_selectedDate);
   }
 }

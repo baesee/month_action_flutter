@@ -96,12 +96,14 @@ class _MonthlyViewState extends State<MonthlyView> {
                             DateFormat('HH:mm').format(action.date),
                           ),
                           trailing: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
                             onTap: () {
                               Provider.of<CalendarProvider>(
                                 context,
                                 listen: false,
                               ).updateAction(
                                 action.copyWith(done: !action.done),
+                                month: widget.focusedMonth,
                               );
                             },
                             child: Container(

@@ -213,10 +213,11 @@ class _WeeklyCalendarViewState extends State<WeeklyCalendarView> {
       subtitle: Text(DateFormat('HH:mm').format(action.date)),
       trailing: GestureDetector(
         onTap: () {
-          Provider.of<CalendarProvider>(
-            context,
-            listen: false,
-          ).updateAction(action.copyWith(done: !action.done));
+          Provider.of<CalendarProvider>(context, listen: false).updateAction(
+            action.copyWith(done: !action.done),
+            weekStart: _startOfWeek,
+            weekEnd: _endOfWeek,
+          );
         },
         child: Container(
           width: 48,

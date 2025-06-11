@@ -47,7 +47,10 @@ class DailyCalendarView extends StatelessWidget {
   void _toggleDone(BuildContext context, int idx) {
     final provider = Provider.of<CalendarProvider>(context, listen: false);
     final action = provider.dayActions[idx];
-    provider.updateAction(action.copyWith(done: !action.done));
+    provider.updateAction(
+      action.copyWith(done: !action.done),
+      date: selectedDate,
+    );
   }
 
   @override
@@ -135,6 +138,7 @@ class DailyCalendarView extends StatelessWidget {
                                             : '',
                                       ),
                                       trailing: GestureDetector(
+                                        behavior: HitTestBehavior.opaque,
                                         onTap: () => _toggleDone(context, idx),
                                         child: Container(
                                           width: 48,
