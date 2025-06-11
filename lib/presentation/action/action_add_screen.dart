@@ -430,9 +430,9 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
       case model.RepeatType.monthly:
         return '매월';
       case model.RepeatType.quarterly:
-        return '3개월';
+        return '분기마다';
       case model.RepeatType.halfYearly:
-        return '6개월';
+        return '반기마다';
     }
   }
 
