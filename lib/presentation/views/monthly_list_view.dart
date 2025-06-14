@@ -79,15 +79,27 @@ class _MonthlyViewState extends State<MonthlyView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        color: Colors.grey[200],
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 18,
+                        ),
+                        margin: const EdgeInsets.symmetric(
                           vertical: 6,
-                          horizontal: 16,
+                          horizontal: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Color(0xFF23262F),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
                           DateFormat('yyyy-MM-dd (E)', 'ko').format(date),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Color(0xFFBFC4CE),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            letterSpacing: 1.1,
+                          ),
                         ),
                       ),
                       ...dayActions.map(

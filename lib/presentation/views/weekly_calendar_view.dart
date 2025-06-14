@@ -120,19 +120,6 @@ class _WeeklyCalendarViewState extends State<WeeklyCalendarView> {
         '${DateFormat('M/d').format(_startOfWeek)} ~ ${DateFormat('M/d').format(_endOfWeek)}';
     return Scaffold(
       backgroundColor: const Color(0xFF181A20),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          '주간 캘린더',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        centerTitle: true,
-      ),
       body: Column(
         children: [
           Padding(
@@ -179,7 +166,7 @@ class _WeeklyCalendarViewState extends State<WeeklyCalendarView> {
               ),
             ),
           ),
-          const Divider(height: 1),
+          SizedBox.shrink(),
           Expanded(
             child: Consumer<CalendarProvider>(
               builder: (context, provider, _) {
@@ -200,7 +187,7 @@ class _WeeklyCalendarViewState extends State<WeeklyCalendarView> {
                 }
                 return ListView.separated(
                   itemCount: actions.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (_, __) => const SizedBox.shrink(),
                   itemBuilder: (context, idx) {
                     final action = actions[idx];
                     return AnimatedCard(

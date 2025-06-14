@@ -417,9 +417,15 @@ class _MonthlyTabScreenState extends State<MonthlyTabScreen>
           bottom: TabBar(
             controller: _tabController,
             tabs: _tabs.map((t) => Tab(text: t)).toList(),
-            indicatorColor: Theme.of(context).colorScheme.primary,
-            labelColor: Theme.of(context).colorScheme.primary,
-            unselectedLabelColor: Colors.black54,
+            indicator: UnderlineTabIndicator(
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.primary,
+                width: 5,
+              ),
+              insets: EdgeInsets.symmetric(horizontal: 24),
+            ),
+            labelColor: Colors.white,
+            unselectedLabelColor: Colors.white70,
           ),
         ),
         body: TabBarView(
@@ -441,38 +447,52 @@ class _MonthlyTabScreenState extends State<MonthlyTabScreen>
                     vertical: 8,
                     horizontal: 12,
                   ),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.chevron_left),
-                        onPressed: _goToPrevMonth,
-                      ),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: _pickMonth,
-                          child: Center(
-                            child: Text(
-                              DateFormat(
-                                'yyyy년 M월',
-                                'ko',
-                              ).format(_focusedMonth),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF23262F),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.chevron_left,
+                            color: Colors.white,
+                          ),
+                          onPressed: _goToPrevMonth,
+                        ),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: _pickMonth,
+                            child: Center(
+                              child: Text(
+                                DateFormat(
+                                  'yyyy년 M월',
+                                  'ko',
+                                ).format(_focusedMonth),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 1.2,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.chevron_right),
-                        onPressed: _goToNextMonth,
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.today),
-                        onPressed: _goToToday,
-                      ),
-                    ],
+                        IconButton(
+                          icon: const Icon(
+                            Icons.chevron_right,
+                            color: Colors.white,
+                          ),
+                          onPressed: _goToNextMonth,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.today, color: Colors.white),
+                          onPressed: _goToToday,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 Expanded(child: MonthlyView(focusedMonth: _focusedMonth)),

@@ -66,19 +66,6 @@ class DailyCalendarView extends StatelessWidget {
     });
     return Scaffold(
       backgroundColor: const Color(0xFF181A20),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text(
-          '일간 캘린더',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        centerTitle: true,
-      ),
       body: Column(
         children: [
           Padding(
@@ -151,7 +138,7 @@ class DailyCalendarView extends StatelessWidget {
                           : ListView.separated(
                             itemCount: actions.length,
                             separatorBuilder:
-                                (_, __) => const Divider(height: 1),
+                                (_, __) => const SizedBox.shrink(),
                             itemBuilder: (context, idx) {
                               final action = actions[idx];
                               return AnimatedCard(

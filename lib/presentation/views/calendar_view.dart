@@ -285,7 +285,7 @@ class _CalendarViewState extends State<CalendarView> {
             },
           ),
         ),
-        const Divider(height: 1),
+        const SizedBox.shrink(),
         Expanded(
           child: Consumer<CalendarProvider>(
             builder: (context, provider, _) {
@@ -322,7 +322,7 @@ class _CalendarViewState extends State<CalendarView> {
               }
               return ListView.separated(
                 itemCount: filtered.length,
-                separatorBuilder: (_, __) => const Divider(height: 1),
+                separatorBuilder: (_, __) => const SizedBox.shrink(),
                 itemBuilder: (context, idx) {
                   final action = filtered[idx];
                   return AnimatedCard(
