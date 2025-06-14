@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../data/models/action_model.dart' as model;
 import '../viewmodels/calendar_provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:month_action/presentation/widgets/gradient_button.dart';
 
 class ActionAddScreen extends StatefulWidget {
   const ActionAddScreen({super.key});
@@ -170,88 +171,282 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
     final labelStyle = const TextStyle(fontSize: 15, color: Colors.grey);
     final inputPadding = const EdgeInsets.symmetric(vertical: 8);
     return Scaffold(
+      backgroundColor: const Color(0xFF181A20),
       appBar: AppBar(
-        title: const Text('행동 등록'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          '행동 등록',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
         automaticallyImplyLeading: true,
+        centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildCategoryButton(model.CategoryType.expense, '지출'),
-                  const SizedBox(width: 12),
-                  _buildCategoryButton(model.CategoryType.todo, '할일'),
-                ],
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 480),
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          decoration: BoxDecoration(
+            color: const Color(0xFF23262F),
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
               ),
-              const SizedBox(height: 24),
-              Padding(
-                padding: inputPadding,
-                child: Row(
+            ],
+          ),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('날짜', style: labelStyle),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      child: Text(
-                        '${_selectedDate.year}. ${_selectedDate.month}. ${_selectedDate.day}. (${['월', '화', '수', '목', '금', '토', '일'][_selectedDate.weekday - 1]})',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: _pickDate,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[100],
-                        foregroundColor: Theme.of(context).colorScheme.primary,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                      ),
-                      child: const Text('날짜 선택'),
-                    ),
+                    _buildCategoryButton(model.CategoryType.expense, '지출'),
+                    const SizedBox(width: 12),
+                    _buildCategoryButton(model.CategoryType.todo, '할일'),
                   ],
                 ),
-              ),
-              if (_selectedCategory == model.CategoryType.expense) ...[
+                const SizedBox(height: 24),
+                Padding(
+                  padding: inputPadding,
+                  child: Row(
+                    children: [
+                      Text(
+                        '날짜',
+                        style: labelStyle.copyWith(color: Colors.white70),
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: Text(
+                          '${_selectedDate.year}. ${_selectedDate.month}. ${_selectedDate.day}. (${['월', '화', '수', '목', '금', '토', '일'][_selectedDate.weekday - 1]})',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: _pickDate,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF6DD5FA),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                        ),
+                        child: const Text('날짜 선택'),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_selectedCategory == model.CategoryType.expense) ...[
+                  const Divider(height: 24),
+                  Padding(
+                    padding: inputPadding,
+                    child: Row(
+                      children: [
+                        Text(
+                          '금액',
+                          style: labelStyle.copyWith(color: Colors.white70),
+                        ),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _amountController,
+                            focusNode: _amountFocusNode,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                            ),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                            validator: (v) {
+                              final raw = v?.replaceAll(',', '');
+                              if (_selectedCategory ==
+                                  model.CategoryType.expense) {
+                                if (raw == null || raw.trim().isEmpty)
+                                  return '금액을 입력하세요';
+                                if (int.tryParse(raw) == null)
+                                  return '숫자만 입력하세요';
+                                if (int.parse(raw) < 0) return '0 이상 입력';
+                              }
+                              return null;
+                            },
+                            onChanged: (v) {
+                              setState(() {
+                                _amount =
+                                    int.tryParse(v.replaceAll(',', '')) ?? 0;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const Divider(height: 24),
+                Padding(
+                  padding: inputPadding,
+                  child: TextFormField(
+                    controller: _titleController,
+                    decoration: InputDecoration(
+                      labelText: '제목',
+                      border: InputBorder.none,
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF6DD5FA),
+                          width: 2,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Colors.redAccent,
+                          width: 2,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Colors.white24,
+                          width: 1,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFF23262F),
+                    ),
+                    style: const TextStyle(fontSize: 16, color: Colors.white),
+                    validator:
+                        (v) =>
+                            v == null || v.trim().isEmpty ? '제목을 입력하세요' : null,
+                  ),
+                ),
+                const Divider(height: 24),
+                Padding(
+                  padding: inputPadding,
+                  child: TextFormField(
+                    controller: _descController,
+                    decoration: InputDecoration(
+                      labelText: '설명',
+                      border: InputBorder.none,
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF6DD5FA),
+                          width: 2,
+                        ),
+                      ),
+                      errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Colors.redAccent,
+                          width: 2,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: const BorderSide(
+                          color: Colors.white24,
+                          width: 1,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: const Color(0xFF23262F),
+                    ),
+                    style: const TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ),
                 const Divider(height: 24),
                 Padding(
                   padding: inputPadding,
                   child: Row(
                     children: [
-                      Text('금액', style: labelStyle),
+                      Text(
+                        '반복',
+                        style: labelStyle.copyWith(color: Colors.white70),
+                      ),
                       const SizedBox(width: 24),
                       Expanded(
-                        child: TextFormField(
-                          controller: _amountController,
-                          focusNode: _amountFocusNode,
-                          keyboardType: TextInputType.number,
+                        child: DropdownButtonFormField<model.RepeatType?>(
+                          value: _selectedRepeatType,
                           decoration: const InputDecoration(
                             border: InputBorder.none,
                           ),
-                          style: const TextStyle(fontSize: 16),
-                          validator: (v) {
-                            final raw = v?.replaceAll(',', '');
-                            if (_selectedCategory ==
-                                model.CategoryType.expense) {
-                              if (raw == null || raw.trim().isEmpty)
-                                return '금액을 입력하세요';
-                              if (int.tryParse(raw) == null) return '숫자만 입력하세요';
-                              if (int.parse(raw) < 0) return '0 이상 입력';
-                            }
-                            return null;
-                          },
+                          items: [
+                            const DropdownMenuItem<model.RepeatType?>(
+                              value: null,
+                              child: Text('없음'),
+                            ),
+                            ...model.RepeatType.values.map(
+                              (e) => DropdownMenuItem(
+                                value: e,
+                                child: Text(
+                                  _repeatTypeLabel(e),
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
+                          onChanged:
+                              (v) => setState(() => _selectedRepeatType = v),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 24),
+                Padding(
+                  padding: inputPadding,
+                  child: Row(
+                    children: [
+                      Text(
+                        '푸시 알림 일정',
+                        style: labelStyle.copyWith(color: Colors.white70),
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: DropdownButtonFormField<model.PushSchedule?>(
+                          value: _selectedPushSchedule,
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                          ),
+                          items: [
+                            const DropdownMenuItem<model.PushSchedule?>(
+                              value: null,
+                              child: Text('없음'),
+                            ),
+                            ...model.PushSchedule.values.map(
+                              (e) => DropdownMenuItem(
+                                value: e,
+                                child: Text(
+                                  _pushScheduleLabel(e),
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
                           onChanged: (v) {
                             setState(() {
-                              _amount =
-                                  int.tryParse(v.replaceAll(',', '')) ?? 0;
+                              _selectedPushSchedule = v;
+                              _selectedPushSchedules.clear();
+                              if (v != null) _selectedPushSchedules.add(v);
                             });
                           },
                         ),
@@ -259,122 +454,25 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: GradientButton(
+                    onTap: _save,
+                    height: 52,
+                    borderRadius: 16,
+                    child: const Text(
+                      '저장',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
               ],
-              const Divider(height: 24),
-              Padding(
-                padding: inputPadding,
-                child: TextFormField(
-                  controller: _titleController,
-                  decoration: const InputDecoration(
-                    labelText: '제목',
-                    border: InputBorder.none,
-                  ),
-                  style: const TextStyle(fontSize: 16),
-                  validator:
-                      (v) => v == null || v.trim().isEmpty ? '제목을 입력하세요' : null,
-                ),
-              ),
-              const Divider(height: 24),
-              Padding(
-                padding: inputPadding,
-                child: TextFormField(
-                  controller: _descController,
-                  decoration: const InputDecoration(
-                    labelText: '설명',
-                    border: InputBorder.none,
-                  ),
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-              const Divider(height: 24),
-              Padding(
-                padding: inputPadding,
-                child: Row(
-                  children: [
-                    Text('반복', style: labelStyle),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      child: DropdownButtonFormField<model.RepeatType?>(
-                        value: _selectedRepeatType,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                        ),
-                        items: [
-                          const DropdownMenuItem<model.RepeatType?>(
-                            value: null,
-                            child: Text('없음'),
-                          ),
-                          ...model.RepeatType.values.map(
-                            (e) => DropdownMenuItem(
-                              value: e,
-                              child: Text(_repeatTypeLabel(e)),
-                            ),
-                          ),
-                        ],
-                        onChanged:
-                            (v) => setState(() => _selectedRepeatType = v),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 24),
-              Padding(
-                padding: inputPadding,
-                child: Row(
-                  children: [
-                    Text('푸시 알림 일정', style: labelStyle),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      child: DropdownButtonFormField<model.PushSchedule?>(
-                        value: _selectedPushSchedule,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                        ),
-                        items: [
-                          const DropdownMenuItem<model.PushSchedule?>(
-                            value: null,
-                            child: Text('없음'),
-                          ),
-                          ...model.PushSchedule.values.map(
-                            (e) => DropdownMenuItem(
-                              value: e,
-                              child: Text(_pushScheduleLabel(e)),
-                            ),
-                          ),
-                        ],
-                        onChanged: (v) {
-                          setState(() {
-                            _selectedPushSchedule = v;
-                            _selectedPushSchedules.clear();
-                            if (v != null) _selectedPushSchedules.add(v);
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _save,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.primary.withOpacity(0.15),
-                    foregroundColor: Theme.of(context).colorScheme.primary,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 18),
-                  ),
-                  child: const Text('저장', style: TextStyle(fontSize: 18)),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -393,15 +491,9 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
         child: Container(
           height: 40,
           decoration: BoxDecoration(
-            color:
-                isSelected
-                    ? Theme.of(context).colorScheme.primary.withOpacity(0.08)
-                    : Colors.transparent,
+            color: isSelected ? const Color(0xFF6DD5FA) : Colors.transparent,
             border: Border.all(
-              color:
-                  isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.grey[300]!,
+              color: isSelected ? Colors.white : Colors.grey[300]!,
               width: 2,
             ),
             borderRadius: BorderRadius.circular(20),
@@ -411,10 +503,7 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
             label,
             style: TextStyle(
               fontSize: 16,
-              color:
-                  isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.black87,
+              color: isSelected ? Colors.white : Colors.white70,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
           ),

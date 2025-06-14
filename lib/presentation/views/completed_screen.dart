@@ -6,6 +6,8 @@ import '../../data/repositories/action_repository.dart';
 import '../../data/repositories/action_history_repository.dart';
 import 'package:intl/intl.dart';
 import '../viewmodels/calendar_provider.dart';
+import 'package:month_action/presentation/widgets/animated_card.dart';
+import 'package:month_action/presentation/widgets/custom_empty_error_loading.dart';
 
 class CompletedScreen extends StatefulWidget {
   const CompletedScreen({super.key});
@@ -86,7 +88,7 @@ class _CompletedScreenState extends State<CompletedScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: CustomLoading(message: '불러오는 중...'));
     }
     // 완료된 Action만 추출 (히스토리 기준)
     final completedIds = _histories.map((h) => h.actionId).toSet();
@@ -140,7 +142,20 @@ class _CompletedScreenState extends State<CompletedScreen> {
       message = '🚀 첫 완료를 향해 도전해보세요!';
     }
     return Scaffold(
-      appBar: AppBar(title: const Text('완료된 항목')),
+      backgroundColor: const Color(0xFF181A20),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          '완료된 항목',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: RefreshIndicator(
         onRefresh: _loadData,
         child: ListView(
@@ -152,7 +167,7 @@ class _CompletedScreenState extends State<CompletedScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.chevron_left),
+                    icon: const Icon(Icons.chevron_left, color: Colors.white),
                     onPressed: _goToPrevMonth,
                   ),
                   Expanded(
@@ -163,18 +178,19 @@ class _CompletedScreenState extends State<CompletedScreen> {
                           DateFormat('yyyy년 M월', 'ko').format(_selectedMonth),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 18,
+                            fontSize: 20,
+                            color: Colors.white,
                           ),
                         ),
                       ),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.chevron_right),
+                    icon: const Icon(Icons.chevron_right, color: Colors.white),
                     onPressed: _goToNextMonth,
                   ),
                   IconButton(
-                    icon: const Icon(Icons.today),
+                    icon: const Icon(Icons.today, color: Colors.white),
                     onPressed: () {
                       final today = DateTime.now();
                       setState(() {
@@ -183,7 +199,7 @@ class _CompletedScreenState extends State<CompletedScreen> {
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.calendar_today),
+                    icon: const Icon(Icons.calendar_today, color: Colors.white),
                     onPressed: _pickMonth,
                   ),
                 ],
@@ -201,112 +217,170 @@ class _CompletedScreenState extends State<CompletedScreen> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
+                    color: Colors.black.withOpacity(0.18),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '🎉 이번 달 완료: $monthCompleted개',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '누적 완료: $totalCompleted개   |   스트릭: $streak일',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.white70,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    message,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // TOP3 카드
+            if (top3.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 18,
+                  horizontal: 20,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF23262F),
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.10),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        const Text('🏆', style: TextStyle(fontSize: 32)),
-                        const SizedBox(width: 12),
-                        Text(
-                          '$monthCompleted건',
-                          style: const TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          '완료',
-                          style: TextStyle(fontSize: 20, color: Colors.white),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '연속 완료 스트릭: $streak일',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      message,
-                      style: const TextStyle(
+                    const Text(
+                      'TOP 3 완료 항목',
+                      style: TextStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    ...top3
+                        .take(3)
+                        .map(
+                          (e) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Row(
+                              children: [
+                                Text('🏅', style: TextStyle(fontSize: 18)),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    e.key,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '${e.value}회',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                   ],
                 ),
               ),
+            // 최근 완료 리스트 (카드형)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                '최근 완료',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
-            // TOP3 카드
-            if (top3.isNotEmpty) ...[
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+            ...monthCompletedActions.map(
+              (a) => AnimatedCard(
+                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(vertical: 0),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 20,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '내가 가장 많이 완료한 항목 TOP3',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 12),
-                        ...top3.take(3).toList().asMap().entries.map((entry) {
-                          final idx = entry.key;
-                          final e = entry.value;
-                          final rankEmoji = ['🥇', '🥈', '🥉'];
-                          return ListTile(
-                            leading: Text(
-                              rankEmoji[idx],
-                              style: const TextStyle(fontSize: 28),
-                            ),
-                            title: Text(
-                              e.key,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            trailing: Text(
-                              '${e.value}회',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
-                        }),
-                      ],
+                  leading: CircleAvatar(
+                    backgroundColor:
+                        a.category == model.CategoryType.expense
+                            ? const Color(0xFFF7971E)
+                            : const Color(0xFF6DD5FA),
+                    child: Icon(
+                      a.category == model.CategoryType.expense
+                          ? Icons.attach_money
+                          : Icons.check,
+                      color: Colors.white,
                     ),
+                  ),
+                  title: Text(
+                    a.title,
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  subtitle: Text(
+                    a.date != null
+                        ? DateFormat('yyyy-MM-dd (E)', 'ko').format(a.date!)
+                        : '',
+                    style: const TextStyle(fontSize: 14, color: Colors.white70),
+                  ),
+                  trailing: const Icon(
+                    Icons.check_circle,
+                    color: Color(0xFF6DD5FA),
+                    size: 28,
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-            ],
-            // 최근 완료 리스트 (날짜별 그룹핑, 미니 아이콘)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: const Text(
-                '최근 완료 항목',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
             ),
-            const SizedBox(height: 8),
-            ..._buildGroupedCompletedList(monthCompletedActions),
+            if (monthCompletedActions.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 48),
+                child: CustomEmpty(message: '아직 완료된 항목이 없습니다!', emoji: '🌙'),
+              ),
+            const SizedBox(height: 32),
           ],
         ),
       ),

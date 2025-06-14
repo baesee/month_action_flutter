@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../viewmodels/calendar_provider.dart';
 import '../action/action_edit_screen.dart';
 import 'package:month_action/data/models/action_model.dart';
+import 'package:month_action/presentation/widgets/animated_card.dart';
+import 'package:month_action/presentation/widgets/custom_empty_error_loading.dart';
 
 typedef DateChangedCallback = void Function(DateTime date);
 
@@ -116,82 +118,141 @@ class _WeeklyCalendarViewState extends State<WeeklyCalendarView> {
   Widget build(BuildContext context) {
     final weekRange =
         '${DateFormat('M/d').format(_startOfWeek)} ~ ${DateFormat('M/d').format(_endOfWeek)}';
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: _goToPrevWeek,
+    return Scaffold(
+      backgroundColor: const Color(0xFF181A20),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          '주간 캘린더',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF23262F),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.10),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              Expanded(
-                child: Center(
-                  child: Text(
-                    weekRange,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left, color: Colors.white),
+                    onPressed: _goToPrevWeek,
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        weekRange,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  IconButton(
+                    icon: const Icon(Icons.chevron_right, color: Colors.white),
+                    onPressed: _goToNextWeek,
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.today, color: Colors.white),
+                    onPressed: _goToToday,
+                  ),
+                ],
               ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: _goToNextWeek,
-              ),
-              IconButton(icon: const Icon(Icons.today), onPressed: _goToToday),
-            ],
+            ),
           ),
-        ),
-        const Divider(height: 1),
-        Expanded(
-          child: Consumer<CalendarProvider>(
-            builder: (context, provider, _) {
-              final actions = provider.dayActions;
-              final grouped = _groupByDate(actions);
-              final sortedDates = grouped.keys.toList()..sort();
-              if (provider.isLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (provider.error != null) {
-                return Center(child: Text('에러: ${provider.error}'));
-              }
-              if (sortedDates.isEmpty) {
-                return const Center(child: Text('데이터가 없습니다.'));
-              }
-              return ListView.builder(
-                itemCount: sortedDates.length,
-                itemBuilder: (context, idx) {
-                  final date = sortedDates[idx];
-                  final dayActions = grouped[date]!;
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        color: Colors.grey[200],
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 6,
-                          horizontal: 16,
-                        ),
-                        child: Text(
-                          DateFormat('yyyy-MM-dd (E)', 'ko').format(date),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      ...dayActions.map(
-                        (action) => _buildActionTile(context, action),
-                      ),
-                    ],
+          const Divider(height: 1),
+          Expanded(
+            child: Consumer<CalendarProvider>(
+              builder: (context, provider, _) {
+                final actions = provider.dayActions;
+                final isLoading = provider.isLoading;
+                final error = provider.error;
+                if (isLoading) {
+                  return const CustomLoading(message: '불러오는 중...');
+                }
+                if (error != null) {
+                  return CustomError(message: '에러: $error');
+                }
+                if (actions.isEmpty) {
+                  return const CustomEmpty(
+                    message: '등록된 행동이 없습니다.',
+                    emoji: '📅',
                   );
-                },
-              );
-            },
+                }
+                return ListView.separated(
+                  itemCount: actions.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, idx) {
+                    final action = actions[idx];
+                    return AnimatedCard(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: ListTile(
+                        title: Text(action.title),
+                        subtitle: _buildSubtitle(action),
+                        trailing: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => _toggleDone(context, idx),
+                          child: Container(
+                            width: 48,
+                            alignment: Alignment.center,
+                            child: Icon(
+                              action.done
+                                  ? Icons.check_circle
+                                  : Icons.radio_button_unchecked,
+                              color: action.done ? Colors.green : Colors.grey,
+                            ),
+                          ),
+                        ),
+                        onTap: () async {
+                          final result = await Navigator.of(
+                            context,
+                            rootNavigator: true,
+                          ).push(
+                            MaterialPageRoute(
+                              builder: (_) => ActionEditScreen(action: action),
+                            ),
+                          );
+                          if (result == true) {
+                            final provider = Provider.of<CalendarProvider>(
+                              context,
+                              listen: false,
+                            );
+                            provider.fetchActionsForDate(
+                              action.date ?? DateTime.now(),
+                            );
+                          }
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -208,50 +269,27 @@ class _WeeklyCalendarViewState extends State<WeeklyCalendarView> {
     return map;
   }
 
-  Widget _buildActionTile(BuildContext context, dynamic action) {
-    return ListTile(
-      title: Text(action.title),
-      subtitle:
-          action.category == CategoryType.expense
-              ? Text('${NumberFormat('#,###').format(action.amount)}원')
-              : (action.description != null && action.description.isNotEmpty
-                  ? Text(
-                    action.description,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  )
-                  : const SizedBox.shrink()),
-      trailing: GestureDetector(
-        onTap: () {
-          Provider.of<CalendarProvider>(context, listen: false).updateAction(
-            action.copyWith(done: !action.done),
-            weekStart: _startOfWeek,
-            weekEnd: _endOfWeek,
-          );
-        },
-        child: Container(
-          width: 48,
-          alignment: Alignment.center,
-          child: Icon(
-            action.done ? Icons.check_circle : Icons.radio_button_unchecked,
-            color: action.done ? Colors.green : Colors.grey,
-          ),
-        ),
-      ),
-      onTap: () async {
-        final result = await Navigator.of(context, rootNavigator: true).push(
-          MaterialPageRoute(builder: (_) => ActionEditScreen(action: action)),
-        );
-        if (result == true) {
-          final provider = Provider.of<CalendarProvider>(
-            context,
-            listen: false,
-          );
-          provider.fetchActionsForWeek(_startOfWeek, _endOfWeek);
-          provider.fetchActionsForDate(_focusedDay);
-          setState(() {});
-        }
-      },
+  Widget _buildSubtitle(dynamic action) {
+    if (action.category == CategoryType.expense) {
+      return Text('${NumberFormat('#,###').format(action.amount)}원');
+    } else if (action.description != null && action.description.isNotEmpty) {
+      return Text(
+        action.description,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    } else {
+      return const SizedBox.shrink();
+    }
+  }
+
+  void _toggleDone(BuildContext context, int index) {
+    final provider = Provider.of<CalendarProvider>(context, listen: false);
+    final action = provider.dayActions[index];
+    provider.updateAction(
+      action.copyWith(done: !action.done),
+      weekStart: _startOfWeek,
+      weekEnd: _endOfWeek,
     );
   }
 }

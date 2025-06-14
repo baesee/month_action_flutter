@@ -9,6 +9,10 @@ import 'package:intl/intl.dart';
 import '../../main.dart'; // routeObserver가 main.dart에 있다고 가정
 import 'package:provider/provider.dart';
 import '../../presentation/viewmodels/calendar_provider.dart';
+import 'package:month_action/presentation/widgets/animated_card.dart';
+import 'package:month_action/presentation/widgets/custom_progress_bar.dart';
+import 'package:month_action/presentation/widgets/custom_tab_indicator.dart';
+import 'package:month_action/presentation/widgets/custom_empty_error_loading.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -154,23 +158,48 @@ class _StatisticsScreenState extends State<StatisticsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF181A20),
       appBar: AppBar(
-        title: const Text('통계 및 리포트'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          '통계 및 리포트',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
           tabs: const [Tab(text: '지출'), Tab(text: '할일')],
+          indicator: const CustomTabIndicator(),
+          labelStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body:
           _loading
-              ? const Center(child: CircularProgressIndicator())
+              ? const CustomLoading(message: '통계 불러오는 중...')
               : Column(
                 children: [
                   _buildMonthNavigator(),
                   Expanded(
                     child: TabBarView(
                       controller: _tabController,
-                      children: [_buildExpenseTab(), _buildTodoTab()],
+                      children: [
+                        Container(
+                          color: const Color(0xFF181A20),
+                          child: _buildExpenseTab(),
+                        ),
+                        Container(
+                          color: const Color(0xFF181A20),
+                          child: _buildTodoTab(),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -305,7 +334,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
 
   Widget _buildBarChart(Map<String, int> data) {
     if (data.isEmpty) {
-      return const Center(child: Text('데이터 없음'));
+      return const CustomEmpty(message: '데이터 없음', emoji: '📊');
     }
     final keys = data.keys.toList()..sort();
     final maxY =
@@ -370,7 +399,10 @@ class _StatisticsScreenState extends State<StatisticsScreen>
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
-        LinearProgressIndicator(value: percent, minHeight: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: CustomProgressBar(value: percent, height: 12),
+        ),
         if (percent >= 1.0)
           Padding(
             padding: const EdgeInsets.only(top: 8.0),

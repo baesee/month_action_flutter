@@ -5,6 +5,8 @@ import '../viewmodels/calendar_provider.dart';
 import '../action/action_edit_screen.dart';
 import 'package:flutter/widgets.dart';
 import 'package:month_action/data/models/action_model.dart';
+import 'package:month_action/presentation/widgets/animated_card.dart';
+import 'package:month_action/presentation/widgets/custom_empty_error_loading.dart';
 
 typedef DateChangedCallback = void Function(DateTime date);
 
@@ -62,19 +64,41 @@ class DailyCalendarView extends StatelessWidget {
         listen: false,
       ).fetchActionsForDate(selectedDate);
     });
-    return Consumer<CalendarProvider>(
-      builder: (context, provider, _) {
-        final actions = provider.dayActions;
-        final isLoading = provider.isLoading;
-        final error = provider.error;
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+    return Scaffold(
+      backgroundColor: const Color(0xFF181A20),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          '일간 캘린더',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF23262F),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.10),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.chevron_left),
+                    icon: const Icon(Icons.chevron_left, color: Colors.white),
                     onPressed: () => _goToPrevDay(context),
                   ),
                   Expanded(
@@ -87,115 +111,119 @@ class DailyCalendarView extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.chevron_right),
+                    icon: const Icon(Icons.chevron_right, color: Colors.white),
                     onPressed: () => _goToNextDay(context),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.today),
+                    icon: const Icon(Icons.today, color: Colors.white),
                     onPressed: () => _goToToday(context),
                   ),
                 ],
               ),
             ),
-            Expanded(
-              child:
-                  isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : error != null
-                      ? Center(child: Text('에러: $error'))
-                      : RefreshIndicator(
-                        onRefresh: () => _refresh(context),
-                        child:
-                            actions.isEmpty
-                                ? ListView(
-                                  children: const [
-                                    SizedBox(height: 80),
-                                    Center(
-                                      child: Text(
-                                        '등록된 행동이 없습니다.',
-                                        style: TextStyle(fontSize: 16),
+          ),
+          Expanded(
+            child: Consumer<CalendarProvider>(
+              builder: (context, provider, _) {
+                final actions = provider.dayActions;
+                final isLoading = provider.isLoading;
+                final error = provider.error;
+                if (isLoading) {
+                  return const CustomLoading(message: '불러오는 중...');
+                }
+                if (error != null) {
+                  return CustomError(message: '에러: $error');
+                }
+                return RefreshIndicator(
+                  onRefresh: () => _refresh(context),
+                  child:
+                      actions.isEmpty
+                          ? const CustomEmpty(
+                            message: '등록된 행동이 없습니다.',
+                            emoji: '📅',
+                          )
+                          : ListView.separated(
+                            itemCount: actions.length,
+                            separatorBuilder:
+                                (_, __) => const Divider(height: 1),
+                            itemBuilder: (context, idx) {
+                              final action = actions[idx];
+                              return AnimatedCard(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                child: ListTile(
+                                  title: Text(action.title),
+                                  subtitle:
+                                      action.category == CategoryType.expense
+                                          ? Text(
+                                            '${NumberFormat('#,###').format(action.amount)}원',
+                                          )
+                                          : (action.description?.isNotEmpty ==
+                                                  true
+                                              ? Text(
+                                                action.description ?? '',
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              )
+                                              : const SizedBox.shrink()),
+                                  trailing: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () => _toggleDone(context, idx),
+                                    child: Container(
+                                      width: 48,
+                                      alignment: Alignment.center,
+                                      child: Icon(
+                                        action.done
+                                            ? Icons.check_circle
+                                            : Icons.radio_button_unchecked,
+                                        color:
+                                            action.done
+                                                ? Colors.green
+                                                : Colors.grey,
                                       ),
                                     ),
-                                  ],
-                                )
-                                : ListView.separated(
-                                  itemCount: actions.length,
-                                  separatorBuilder:
-                                      (_, __) => const Divider(height: 1),
-                                  itemBuilder: (context, idx) {
-                                    final action = actions[idx];
-                                    return ListTile(
-                                      title: Text(action.title),
-                                      subtitle:
-                                          action.category ==
-                                                  CategoryType.expense
-                                              ? Text(
-                                                '${NumberFormat('#,###').format(action.amount)}원',
-                                              )
-                                              : (action
-                                                          .description
-                                                          ?.isNotEmpty ==
-                                                      true
-                                                  ? Text(
-                                                    action.description ?? '',
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  )
-                                                  : const SizedBox.shrink()),
-                                      trailing: GestureDetector(
-                                        behavior: HitTestBehavior.opaque,
-                                        onTap: () => _toggleDone(context, idx),
-                                        child: Container(
-                                          width: 48,
-                                          alignment: Alignment.center,
-                                          child: Icon(
-                                            action.done
-                                                ? Icons.check_circle
-                                                : Icons.radio_button_unchecked,
-                                            color:
-                                                action.done
-                                                    ? Colors.green
-                                                    : Colors.grey,
-                                          ),
-                                        ),
+                                  ),
+                                  onTap: () async {
+                                    final result = await Navigator.of(
+                                      context,
+                                      rootNavigator: true,
+                                    ).push(
+                                      MaterialPageRoute(
+                                        builder:
+                                            (_) => ActionEditScreen(
+                                              action: action,
+                                            ),
                                       ),
-                                      onTap: () async {
-                                        final result = await Navigator.of(
-                                          context,
-                                          rootNavigator: true,
-                                        ).push(
-                                          MaterialPageRoute(
-                                            builder:
-                                                (_) => ActionEditScreen(
-                                                  action: action,
-                                                ),
-                                          ),
-                                        );
-                                        if (result == true) {
-                                          final provider =
-                                              Provider.of<CalendarProvider>(
-                                                context,
-                                                listen: false,
-                                              );
-                                          provider.fetchActionsForDate(
-                                            selectedDate,
-                                          );
-                                        }
-                                      },
                                     );
+                                    if (result == true) {
+                                      final provider =
+                                          Provider.of<CalendarProvider>(
+                                            context,
+                                            listen: false,
+                                          );
+                                      provider.fetchActionsForDate(
+                                        selectedDate,
+                                      );
+                                    }
                                   },
                                 ),
-                      ),
+                              );
+                            },
+                          ),
+                );
+              },
             ),
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
   }
 }

@@ -79,97 +79,174 @@ class _MainScreenState extends State<MainScreen> {
     return true;
   }
 
+  // FAB 액션 핸들러 (기존 FloatingActionButton onPressed 로직)
+  Future<void> _onFabPressed() async {
+    final selectedDate = await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ActionAddScreen()));
+    if (selectedDate is DateTime) {
+      final provider = Provider.of<CalendarProvider>(context, listen: false);
+      provider.fetchActionsForMonth(
+        DateTime(selectedDate.year, selectedDate.month),
+      );
+      provider.fetchActionsForDate(selectedDate);
+      _setExternalSelectedDate(selectedDate);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final selectedColor = theme.colorScheme.primary;
-    final backgroundColor =
-        theme.bottomNavigationBarTheme.backgroundColor ??
-        theme.colorScheme.surface;
-
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
+        backgroundColor: const Color(0xFF181A20),
         body: IndexedStack(
           index: _selectedIndex,
           children: List.generate(4, (index) {
-            return Navigator(
-              key: _navigatorKeys[index],
-              initialRoute: _initialRoutes[index],
-              onGenerateRoute: (settings) {
-                final builders = _routeBuilders(context, index);
-                final builder =
-                    builders[settings.name] ?? builders.values.first;
-                return MaterialPageRoute(builder: builder, settings: settings);
-                // fallback
-                return MaterialPageRoute(
-                  builder: (_) => const SizedBox.shrink(),
-                );
-              },
+            return Container(
+              color: const Color(0xFF181A20),
+              child: Navigator(
+                key: _navigatorKeys[index],
+                initialRoute: _initialRoutes[index],
+                onGenerateRoute: (settings) {
+                  final builders = _routeBuilders(context, index);
+                  final builder =
+                      builders[settings.name] ?? builders.values.first;
+                  return MaterialPageRoute(
+                    builder: builder,
+                    settings: settings,
+                  );
+                },
+              ),
             );
           }),
         ),
-        floatingActionButton:
-            _selectedIndex == 0
-                ? FloatingActionButton(
-                  onPressed: () async {
-                    final selectedDate = await Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const ActionAddScreen(),
-                      ),
-                    );
-                    if (selectedDate is DateTime) {
-                      final provider = Provider.of<CalendarProvider>(
-                        context,
-                        listen: false,
-                      );
-                      provider.fetchActionsForMonth(
-                        DateTime(selectedDate.year, selectedDate.month),
-                      );
-                      provider.fetchActionsForDate(selectedDate);
-                      _setExternalSelectedDate(selectedDate);
-                    }
-                  },
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  shape: const CircleBorder(),
-                  elevation: 6,
-                  tooltip: '행동 추가',
-                  child: const Icon(Icons.add, size: 32),
-                )
-                : null,
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: _selectedIndex,
-          onDestinationSelected: (index) {
-            setState(() => _selectedIndex = index);
+        floatingActionButton: Builder(
+          builder: (context) {
+            return GestureDetector(
+              onTap: _onFabPressed,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOut,
+                width: 48,
+                height: 48,
+                margin: const EdgeInsets.only(top: 8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6DD5FA), Color(0xFF2980B9)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.22),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
+                    ),
+                    BoxShadow(
+                      color: const Color(0xFF6DD5FA).withOpacity(0.18),
+                      blurRadius: 32,
+                      offset: const Offset(0, 0),
+                      spreadRadius: 2,
+                    ),
+                  ],
+                  border: Border.all(color: Colors.white10, width: 2),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(24),
+                    splashColor: Colors.white.withOpacity(0.18),
+                    highlightColor: Colors.white.withOpacity(0.08),
+                    onTap: _onFabPressed,
+                    child: const Center(
+                      child: Icon(Icons.add, color: Colors.white, size: 28),
+                    ),
+                  ),
+                ),
+              ),
+            );
           },
-          backgroundColor: backgroundColor,
-          indicatorColor: selectedColor.withOpacity(0.12),
-          height: 64,
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.calendar_month, size: 28),
-              selectedIcon: Icon(Icons.calendar_month, size: 32),
-              label: '월간',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.emoji_events, size: 28),
-              selectedIcon: Icon(Icons.emoji_events, size: 32),
-              label: '완료',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.bar_chart, size: 28),
-              selectedIcon: Icon(Icons.bar_chart, size: 32),
-              label: '통계',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.settings, size: 28),
-              selectedIcon: Icon(Icons.settings, size: 32),
-              label: '설정',
-            ),
-          ],
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        bottomNavigationBar: BottomAppBar(
+          shape: const CircularNotchedRectangle(),
+          notchMargin: 6,
+          color: const Color(0xFF23262F),
+          elevation: 16,
+          child: SizedBox(
+            height: 88,
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildNavItem(
+                    icon: Icons.calendar_month,
+                    label: '월간',
+                    selected: _selectedIndex == 0,
+                    onTap: () => setState(() => _selectedIndex = 0),
+                  ),
+                ),
+                Expanded(
+                  child: _buildNavItem(
+                    icon: Icons.emoji_events,
+                    label: '완료',
+                    selected: _selectedIndex == 1,
+                    onTap: () => setState(() => _selectedIndex = 1),
+                  ),
+                ),
+                const SizedBox(width: 48),
+                Expanded(
+                  child: _buildNavItem(
+                    icon: Icons.bar_chart,
+                    label: '통계',
+                    selected: _selectedIndex == 2,
+                    onTap: () => setState(() => _selectedIndex = 2),
+                  ),
+                ),
+                Expanded(
+                  child: _buildNavItem(
+                    icon: Icons.settings,
+                    label: '설정',
+                    selected: _selectedIndex == 3,
+                    onTap: () => setState(() => _selectedIndex = 3),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required IconData icon,
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: selected ? 32 : 28,
+            color: selected ? const Color(0xFF6DD5FA) : Colors.white,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+              color: selected ? const Color(0xFF6DD5FA) : Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }

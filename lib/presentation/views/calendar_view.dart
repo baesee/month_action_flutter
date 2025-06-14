@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import '../viewmodels/calendar_provider.dart';
 import '../action/action_edit_screen.dart';
 import 'package:month_action/data/models/action_model.dart';
+import 'package:month_action/presentation/widgets/animated_card.dart';
+import 'package:month_action/presentation/widgets/custom_empty_error_loading.dart';
 
 typedef DateChangedCallback = void Function(DateTime date);
 
@@ -129,47 +131,64 @@ class _CalendarViewState extends State<CalendarView> {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: _goToPrevMonth,
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: _focusedDay,
-                      firstDate: DateTime(2020, 1),
-                      lastDate: DateTime(2100, 12),
-                      locale: const Locale('ko'),
-                    );
-                    if (picked != null) {
-                      setState(() {
-                        _focusedDay = DateTime(picked.year, picked.month);
-                        _selectedDay = picked;
-                      });
-                      widget.onDateChanged?.call(picked);
-                    }
-                  },
-                  child: Center(
-                    child: Text(
-                      monthStr,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF23262F),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.10),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left, color: Colors.white),
+                  onPressed: _goToPrevMonth,
+                ),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: _focusedDay,
+                        firstDate: DateTime(2020, 1),
+                        lastDate: DateTime(2100, 12),
+                        locale: const Locale('ko'),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          _focusedDay = DateTime(picked.year, picked.month);
+                          _selectedDay = picked;
+                        });
+                        widget.onDateChanged?.call(picked);
+                      }
+                    },
+                    child: Center(
+                      child: Text(
+                        monthStr,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: _goToNextMonth,
-              ),
-              IconButton(icon: const Icon(Icons.today), onPressed: _goToToday),
-            ],
+                IconButton(
+                  icon: const Icon(Icons.chevron_right, color: Colors.white),
+                  onPressed: _goToNextMonth,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.today, color: Colors.white),
+                  onPressed: _goToToday,
+                ),
+              ],
+            ),
           ),
         ),
         TableCalendar(
@@ -186,17 +205,20 @@ class _CalendarViewState extends State<CalendarView> {
           },
           calendarStyle: const CalendarStyle(
             todayDecoration: BoxDecoration(
-              color: Colors.deepPurple,
+              color: Color(0xFF6DD5FA),
               shape: BoxShape.circle,
             ),
             selectedDecoration: BoxDecoration(
-              color: Colors.orange,
+              color: Color(0xFFF7971E),
               shape: BoxShape.circle,
             ),
             markerDecoration: BoxDecoration(
-              color: Colors.blue,
+              color: Color(0xFF6DD5FA),
               shape: BoxShape.circle,
             ),
+            weekendTextStyle: TextStyle(color: Colors.white70),
+            defaultTextStyle: TextStyle(color: Colors.white),
+            outsideTextStyle: TextStyle(color: Colors.white24),
           ),
           headerVisible: false,
           calendarBuilders: CalendarBuilders(
@@ -271,10 +293,18 @@ class _CalendarViewState extends State<CalendarView> {
               final isLoading = provider.isLoading;
               final error = provider.error;
               if (isLoading) {
-                return const Center(child: CircularProgressIndicator());
+                return const CustomLoading(message: '캘린더 불러오는 중...');
               }
               if (error != null) {
-                return Center(child: Text('에러: $error'));
+                return CustomError(
+                  message: '에러: $error',
+                  onRetry: () {
+                    Provider.of<CalendarProvider>(
+                      context,
+                      listen: false,
+                    ).fetchActionsForMonth(_focusedDay);
+                  },
+                );
               }
               final filtered =
                   actions
@@ -288,60 +318,85 @@ class _CalendarViewState extends State<CalendarView> {
                       )
                       .toList();
               if (filtered.isEmpty) {
-                return const Center(
-                  child: Text('등록된 행동이 없습니다.', style: TextStyle(fontSize: 16)),
-                );
+                return const CustomEmpty(message: '등록된 항목이 없습니다.', emoji: '��');
               }
               return ListView.separated(
                 itemCount: filtered.length,
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, idx) {
                   final action = filtered[idx];
-                  return ListTile(
-                    title: Text(action.title),
-                    subtitle: _buildSubtitle(action),
-                    trailing: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () {
-                        Provider.of<CalendarProvider>(
-                          context,
-                          listen: false,
-                        ).updateAction(
-                          action.copyWith(done: !action.done),
-                          date: _selectedDay,
-                          month: _focusedDay,
-                        );
-                      },
-                      child: Container(
-                        width: 48,
-                        alignment: Alignment.center,
+                  return AnimatedCard(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: 20,
+                      ),
+                      leading: CircleAvatar(
+                        backgroundColor:
+                            action.category == CategoryType.expense
+                                ? const Color(0xFFF7971E)
+                                : const Color(0xFF6DD5FA),
                         child: Icon(
-                          action.done
-                              ? Icons.check_circle
-                              : Icons.radio_button_unchecked,
-                          color: action.done ? Colors.green : Colors.grey,
+                          action.category == CategoryType.expense
+                              ? Icons.attach_money
+                              : Icons.check,
+                          color: Colors.white,
                         ),
                       ),
-                    ),
-                    onTap: () async {
-                      final result = await Navigator.of(
-                        context,
-                        rootNavigator: true,
-                      ).push(
-                        MaterialPageRoute(
-                          builder: (_) => ActionEditScreen(action: action),
+                      title: Text(
+                        action.title,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
                         ),
-                      );
-                      if (result == true) {
-                        final provider = Provider.of<CalendarProvider>(
+                      ),
+                      subtitle: Text(
+                        action.date != null
+                            ? DateFormat(
+                              'yyyy-MM-dd (E)',
+                              'ko',
+                            ).format(action.date!)
+                            : '',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      trailing: Icon(
+                        action.done
+                            ? Icons.check_circle
+                            : Icons.radio_button_unchecked,
+                        color:
+                            action.done
+                                ? const Color(0xFF6DD5FA)
+                                : Colors.white24,
+                        size: 28,
+                      ),
+                      onTap: () async {
+                        final result = await Navigator.of(
                           context,
-                          listen: false,
+                          rootNavigator: true,
+                        ).push(
+                          MaterialPageRoute(
+                            builder: (_) => ActionEditScreen(action: action),
+                          ),
                         );
-                        provider.fetchActionsForMonth(_focusedDay);
-                        provider.fetchActionsForDate(_selectedDay!);
-                        setState(() {});
-                      }
-                    },
+                        if (result == true) {
+                          final provider = Provider.of<CalendarProvider>(
+                            context,
+                            listen: false,
+                          );
+                          provider.fetchActionsForMonth(_focusedDay);
+                          provider.fetchActionsForDate(_selectedDay!);
+                          setState(() {});
+                        }
+                      },
+                    ),
                   );
                 },
               );
