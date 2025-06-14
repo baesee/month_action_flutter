@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:month_action/presentation/viewmodels/calendar_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:month_action/presentation/views/statistics_screen.dart';
+import 'package:month_action/presentation/views/completed_screen.dart';
 // TODO: MonthlyView(월간), StatisticsScreen, SettingsScreen 파일도 준비/연결
 
 class MainScreen extends StatefulWidget {
@@ -39,7 +40,7 @@ class _MainScreenState extends State<MainScreen> {
   // 각 탭별 첫 화면 라우트 이름
   static const List<String> _initialRoutes = [
     '/monthly',
-    '/category',
+    '/completed',
     '/statistics',
     '/settings',
   ];
@@ -57,7 +58,7 @@ class _MainScreenState extends State<MainScreen> {
               ),
         };
       case 1:
-        return {'/category': (_) => const CategoryScreen()};
+        return {'/completed': (_) => const CompletedScreen()};
       case 2:
         return {'/statistics': (_) => const StatisticsScreen()};
       case 3:
@@ -152,9 +153,9 @@ class _MainScreenState extends State<MainScreen> {
               label: '월간',
             ),
             NavigationDestination(
-              icon: Icon(Icons.category, size: 28),
-              selectedIcon: Icon(Icons.category, size: 32),
-              label: '카테고리',
+              icon: Icon(Icons.emoji_events, size: 28),
+              selectedIcon: Icon(Icons.emoji_events, size: 32),
+              label: '완료',
             ),
             NavigationDestination(
               icon: Icon(Icons.bar_chart, size: 28),
