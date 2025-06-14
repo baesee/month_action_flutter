@@ -198,10 +198,6 @@ class _CompletedScreenState extends State<CompletedScreen> {
                       });
                     },
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.calendar_today, color: Colors.white),
-                    onPressed: _pickMonth,
-                  ),
                 ],
               ),
             ),

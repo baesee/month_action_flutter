@@ -144,12 +144,34 @@ class _WeeklyCalendarViewState extends State<WeeklyCalendarView> {
                   ),
                   Expanded(
                     child: Center(
-                      child: Text(
-                        weekRange,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      child: GestureDetector(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: _focusedDay,
+                            firstDate: DateTime(2020, 1),
+                            lastDate: DateTime(2100, 12),
+                            locale: const Locale('ko'),
+                          );
+                          if (picked != null &&
+                              !isSameDay(picked, _focusedDay)) {
+                            setState(() {
+                              _focusedDay = picked;
+                            });
+                            Provider.of<CalendarProvider>(
+                              context,
+                              listen: false,
+                            ).fetchActionsForWeek(_startOfWeek, _endOfWeek);
+                            widget.onDateChanged?.call(picked);
+                          }
+                        },
+                        child: Text(
+                          weekRange,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),

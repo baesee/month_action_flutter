@@ -90,15 +90,33 @@ class DailyCalendarView extends StatelessWidget {
                   ),
                   Expanded(
                     child: Center(
-                      child: Text(
-                        DateFormat(
-                          'yyyy년 M월 d일 (E)',
-                          'ko',
-                        ).format(selectedDate),
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      child: GestureDetector(
+                        onTap: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime(2020, 1),
+                            lastDate: DateTime(2100, 12),
+                            locale: const Locale('ko'),
+                          );
+                          if (picked != null && picked != selectedDate) {
+                            onDateChanged?.call(picked);
+                            Provider.of<CalendarProvider>(
+                              context,
+                              listen: false,
+                            ).setSelectedDate(picked);
+                          }
+                        },
+                        child: Text(
+                          DateFormat(
+                            'yyyy년 M월 d일 (E)',
+                            'ko',
+                          ).format(selectedDate),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
