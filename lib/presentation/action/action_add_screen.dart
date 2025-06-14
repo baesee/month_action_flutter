@@ -26,12 +26,27 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
   int _amount = 0;
   final _amountController = TextEditingController();
   final _amountFocusNode = FocusNode();
+  final _titleFocusNode = FocusNode();
+
+  void _focusByCategory() {
+    FocusScope.of(context).unfocus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_selectedCategory == model.CategoryType.expense) {
+        _amountFocusNode.requestFocus();
+      } else {
+        _titleFocusNode.requestFocus();
+      }
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     _selectedPushSchedule = null;
     _amountFocusNode.addListener(_onAmountFocusChange);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusByCategory();
+    });
   }
 
   @override
@@ -40,6 +55,7 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
     _descController.dispose();
     _amountController.dispose();
     _amountFocusNode.dispose();
+    _titleFocusNode.dispose();
     super.dispose();
   }
 
@@ -166,6 +182,12 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
     return dates;
   }
 
+  void _onCategoryChanged(model.CategoryType type) {
+    if (_selectedCategory == type) return;
+    setState(() => _selectedCategory = type);
+    _focusByCategory();
+  }
+
   @override
   Widget build(BuildContext context) {
     final labelStyle = const TextStyle(fontSize: 15, color: Colors.grey);
@@ -215,16 +237,12 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
                     _buildCategoryButton(model.CategoryType.todo, '할일'),
                   ],
                 ),
-                const SizedBox(height: 24),
-                Padding(
-                  padding: inputPadding,
+                const SizedBox(height: 20),
+                _buildFormRow(
+                  label: '날짜',
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        '날짜',
-                        style: labelStyle.copyWith(color: Colors.white70),
-                      ),
-                      const SizedBox(width: 24),
                       Expanded(
                         child: Text(
                           '${_selectedDate.year}. ${_selectedDate.month}. ${_selectedDate.day}. (${['월', '화', '수', '목', '금', '토', '일'][_selectedDate.weekday - 1]})',
@@ -256,83 +274,75 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
                   ),
                 ),
                 if (_selectedCategory == model.CategoryType.expense) ...[
-                  const Divider(height: 24),
-                  Padding(
-                    padding: inputPadding,
-                    child: Row(
-                      children: [
-                        Text(
-                          '금액',
-                          style: labelStyle.copyWith(color: Colors.white70),
+                  const SizedBox(height: 16),
+                  _buildFormRow(
+                    label: '금액',
+                    child: TextFormField(
+                      controller: _amountController,
+                      focusNode: _amountFocusNode,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.white24),
                         ),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _amountController,
-                            focusNode: _amountFocusNode,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              border: InputBorder.none,
-                            ),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                            validator: (v) {
-                              final raw = v?.replaceAll(',', '');
-                              if (_selectedCategory ==
-                                  model.CategoryType.expense) {
-                                if (raw == null || raw.trim().isEmpty)
-                                  return '금액을 입력하세요';
-                                if (int.tryParse(raw) == null)
-                                  return '숫자만 입력하세요';
-                                if (int.parse(raw) < 0) return '0 이상 입력';
-                              }
-                              return null;
-                            },
-                            onChanged: (v) {
-                              setState(() {
-                                _amount =
-                                    int.tryParse(v.replaceAll(',', '')) ?? 0;
-                              });
-                            },
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: Color(0xFF6DD5FA),
+                            width: 2,
                           ),
                         ),
-                      ],
+                        filled: true,
+                        fillColor: Color(0xFF23262F),
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                      ),
+                      style: const TextStyle(fontSize: 16, color: Colors.white),
+                      validator: (v) {
+                        final raw = v?.replaceAll(',', '');
+                        if (_selectedCategory == model.CategoryType.expense) {
+                          if (raw == null || raw.trim().isEmpty)
+                            return '금액을 입력하세요';
+                          if (int.tryParse(raw) == null) return '숫자만 입력하세요';
+                          if (int.parse(raw) < 0) return '0 이상 입력';
+                        }
+                        return null;
+                      },
+                      onChanged: (v) {
+                        setState(() {
+                          _amount = int.tryParse(v.replaceAll(',', '')) ?? 0;
+                        });
+                      },
                     ),
                   ),
                 ],
-                const Divider(height: 24),
-                Padding(
-                  padding: inputPadding,
+                const SizedBox(height: 16),
+                _buildFormRow(
+                  label: '제목',
                   child: TextFormField(
                     controller: _titleController,
+                    focusNode: _titleFocusNode,
                     decoration: InputDecoration(
-                      labelText: '제목',
-                      border: InputBorder.none,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.white24),
+                      ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
                           color: Color(0xFF6DD5FA),
                           width: 2,
                         ),
                       ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Colors.redAccent,
-                          width: 2,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Colors.white24,
-                          width: 1,
-                        ),
-                      ),
                       filled: true,
-                      fillColor: const Color(0xFF23262F),
+                      fillColor: Color(0xFF23262F),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                     ),
                     style: const TextStyle(fontSize: 16, color: Colors.white),
                     validator:
@@ -340,123 +350,124 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
                             v == null || v.trim().isEmpty ? '제목을 입력하세요' : null,
                   ),
                 ),
-                const Divider(height: 24),
-                Padding(
-                  padding: inputPadding,
+                const SizedBox(height: 16),
+                _buildFormRow(
+                  label: '설명',
                   child: TextFormField(
                     controller: _descController,
                     decoration: InputDecoration(
-                      labelText: '설명',
-                      border: InputBorder.none,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.white24),
+                      ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
                           color: Color(0xFF6DD5FA),
                           width: 2,
                         ),
                       ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Colors.redAccent,
-                          width: 2,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: const BorderSide(
-                          color: Colors.white24,
-                          width: 1,
-                        ),
-                      ),
                       filled: true,
-                      fillColor: const Color(0xFF23262F),
+                      fillColor: Color(0xFF23262F),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                     ),
                     style: const TextStyle(fontSize: 16, color: Colors.white),
                   ),
                 ),
-                const Divider(height: 24),
-                Padding(
-                  padding: inputPadding,
-                  child: Row(
-                    children: [
-                      Text(
-                        '반복',
-                        style: labelStyle.copyWith(color: Colors.white70),
+                const SizedBox(height: 16),
+                _buildFormRow(
+                  label: '반복',
+                  child: DropdownButtonFormField<model.RepeatType?>(
+                    value: _selectedRepeatType,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.white24),
                       ),
-                      const SizedBox(width: 24),
-                      Expanded(
-                        child: DropdownButtonFormField<model.RepeatType?>(
-                          value: _selectedRepeatType,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Color(0xFF6DD5FA),
+                          width: 2,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Color(0xFF23262F),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+                    items: [
+                      const DropdownMenuItem<model.RepeatType?>(
+                        value: null,
+                        child: Text('없음'),
+                      ),
+                      ...model.RepeatType.values.map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            _repeatTypeLabel(e),
+                            style: const TextStyle(color: Colors.white),
                           ),
-                          items: [
-                            const DropdownMenuItem<model.RepeatType?>(
-                              value: null,
-                              child: Text('없음'),
-                            ),
-                            ...model.RepeatType.values.map(
-                              (e) => DropdownMenuItem(
-                                value: e,
-                                child: Text(
-                                  _repeatTypeLabel(e),
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ],
-                          onChanged:
-                              (v) => setState(() => _selectedRepeatType = v),
                         ),
                       ),
                     ],
+                    onChanged: (v) => setState(() => _selectedRepeatType = v),
                   ),
                 ),
-                const Divider(height: 24),
-                Padding(
-                  padding: inputPadding,
-                  child: Row(
-                    children: [
-                      Text(
-                        '푸시 알림 일정',
-                        style: labelStyle.copyWith(color: Colors.white70),
+                const SizedBox(height: 16),
+                _buildFormRow(
+                  label: '알림 일정',
+                  child: DropdownButtonFormField<model.PushSchedule?>(
+                    value: _selectedPushSchedule,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.white24),
                       ),
-                      const SizedBox(width: 24),
-                      Expanded(
-                        child: DropdownButtonFormField<model.PushSchedule?>(
-                          value: _selectedPushSchedule,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Color(0xFF6DD5FA),
+                          width: 2,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Color(0xFF23262F),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                    ),
+                    items: [
+                      const DropdownMenuItem<model.PushSchedule?>(
+                        value: null,
+                        child: Text('없음'),
+                      ),
+                      ...model.PushSchedule.values.map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(
+                            _pushScheduleLabel(e),
+                            style: const TextStyle(color: Colors.white),
                           ),
-                          items: [
-                            const DropdownMenuItem<model.PushSchedule?>(
-                              value: null,
-                              child: Text('없음'),
-                            ),
-                            ...model.PushSchedule.values.map(
-                              (e) => DropdownMenuItem(
-                                value: e,
-                                child: Text(
-                                  _pushScheduleLabel(e),
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ],
-                          onChanged: (v) {
-                            setState(() {
-                              _selectedPushSchedule = v;
-                              _selectedPushSchedules.clear();
-                              if (v != null) _selectedPushSchedules.add(v);
-                            });
-                          },
                         ),
                       ),
                     ],
+                    onChanged: (v) {
+                      setState(() {
+                        _selectedPushSchedule = v;
+                        _selectedPushSchedules.clear();
+                        if (v != null) _selectedPushSchedules.add(v);
+                      });
+                    },
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 40),
                 SizedBox(
                   width: double.infinity,
                   child: GradientButton(
@@ -487,7 +498,7 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
       child: GestureDetector(
         onTap: () {
           if (_selectedCategory != type) {
-            setState(() => _selectedCategory = type);
+            _onCategoryChanged(type);
           }
         },
         child: Container(
@@ -538,5 +549,29 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
       case model.PushSchedule.sevenDaysBefore:
         return '7일 전';
     }
+  }
+
+  Widget _buildFormRow({required String label, required Widget child}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(child: child),
+        ],
+      ),
+    );
   }
 }
