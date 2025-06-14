@@ -55,7 +55,19 @@ class MonthlyView extends StatelessWidget {
         final grouped = groupByDate(actions);
         final sortedDates = grouped.keys.toList()..sort();
         if (sortedDates.isEmpty) {
-          return const Center(child: Text('데이터가 없습니다.'));
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('📅', style: TextStyle(fontSize: 40)),
+                SizedBox(height: 12),
+                Text(
+                  '등록된 행동이 없습니다.',
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ],
+            ),
+          );
         }
         return ListView.builder(
           itemCount: sortedDates.length,

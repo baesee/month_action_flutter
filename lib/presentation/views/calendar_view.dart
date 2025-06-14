@@ -318,7 +318,7 @@ class _CalendarViewState extends State<CalendarView> {
                       )
                       .toList();
               if (filtered.isEmpty) {
-                return const CustomEmpty(message: '등록된 항목이 없습니다.', emoji: '��');
+                return const CustomEmpty(message: '등록된 행동이 없습니다.', emoji: '📅');
               }
               return ListView.separated(
                 itemCount: filtered.length,

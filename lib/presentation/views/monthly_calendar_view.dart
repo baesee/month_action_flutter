@@ -296,7 +296,10 @@ class _CalendarViewState extends State<CalendarView> {
                       .toList();
               if (filtered.isEmpty) {
                 return const Center(
-                  child: Text('등록된 행동이 없습니다.', style: TextStyle(fontSize: 16)),
+                  child: Text(
+                    '등록된 행동이 없습니다.!!',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
                 );
               }
               return ListView.separated(
