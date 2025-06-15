@@ -357,65 +357,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 4,
-                          horizontal: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF7971E).withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.local_fire_department,
-                              color: Color(0xFFF7971E),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '스트릭 $streak일',
-                              style: TextStyle(
-                                color: Color(0xFFF7971E),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 4,
-                          horizontal: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.emoji_events,
-                              color: Colors.amber,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '최고 $maxStreak일',
-                              style: TextStyle(
-                                color: Colors.amber,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+
                   const SizedBox(height: 10),
                   Text(
                     insight,
@@ -617,65 +559,7 @@ class _StatisticsScreenState extends State<StatisticsScreen>
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 4,
-                          horizontal: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Color(0xFF6DD5FA).withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.local_fire_department,
-                              color: Color(0xFF6DD5FA),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '스트릭 $streak일',
-                              style: TextStyle(
-                                color: Color(0xFF6DD5FA),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 4,
-                          horizontal: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.emoji_events,
-                              color: Colors.amber,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '최고 $maxStreak일',
-                              style: TextStyle(
-                                color: Colors.amber,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                  Row(children: [const SizedBox(width: 10)]),
                   const SizedBox(height: 10),
                   Text(
                     insight,
