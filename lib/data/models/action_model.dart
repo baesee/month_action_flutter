@@ -69,6 +69,12 @@ class Action extends HiveObject {
   @HiveField(9)
   String? repeatGroupId;
 
+  @HiveField(10)
+  DateTime? notificationDateTime;
+
+  @HiveField(11)
+  String? notificationTime; // HH:mm 포맷 문자열로 저장 (TimeOfDay는 직접 저장 불가)
+
   // 생성자
   Action({
     required this.id,
@@ -81,6 +87,8 @@ class Action extends HiveObject {
     this.done = false,
     this.amount = 0,
     this.repeatGroupId,
+    this.notificationDateTime,
+    this.notificationTime,
   });
 
   factory Action.fromJson(Map<String, dynamic> json) => Action(
@@ -110,6 +118,11 @@ class Action extends HiveObject {
     done: json['done'] as bool? ?? false,
     amount: json['amount'] as int? ?? 0,
     repeatGroupId: json['repeatGroupId'] as String?,
+    notificationDateTime:
+        json['notificationDateTime'] != null
+            ? DateTime.tryParse(json['notificationDateTime'])
+            : null,
+    notificationTime: json['notificationTime'] as String?,
   );
 
   Map<String, dynamic> toJson() => {
@@ -123,6 +136,8 @@ class Action extends HiveObject {
     'done': done,
     'amount': amount,
     'repeatGroupId': repeatGroupId,
+    'notificationDateTime': notificationDateTime?.toIso8601String(),
+    'notificationTime': notificationTime,
   };
 
   Action copyWith({
@@ -136,6 +151,8 @@ class Action extends HiveObject {
     bool? done,
     int? amount,
     String? repeatGroupId,
+    DateTime? notificationDateTime,
+    String? notificationTime,
   }) {
     return Action(
       id: id ?? this.id,
@@ -148,6 +165,8 @@ class Action extends HiveObject {
       done: done ?? this.done,
       amount: amount ?? this.amount,
       repeatGroupId: repeatGroupId ?? this.repeatGroupId,
+      notificationDateTime: notificationDateTime ?? this.notificationDateTime,
+      notificationTime: notificationTime ?? this.notificationTime,
     );
   }
 }

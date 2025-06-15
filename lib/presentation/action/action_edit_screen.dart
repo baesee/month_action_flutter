@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../data/models/action_model.dart' as model;
 import '../viewmodels/calendar_provider.dart';
 import 'package:month_action/presentation/widgets/gradient_button.dart';
+import 'package:flutter/services.dart';
 
 class ActionEditScreen extends StatefulWidget {
   final model.Action action;
@@ -25,6 +26,7 @@ class _ActionEditScreenState extends State<ActionEditScreen> {
   final _amountController = TextEditingController();
   final _amountFocusNode = FocusNode();
   final _titleFocusNode = FocusNode();
+  TimeOfDay? _notificationTime;
 
   void _focusByCategory() {
     FocusScope.of(context).unfocus();
@@ -58,6 +60,15 @@ class _ActionEditScreenState extends State<ActionEditScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusByCategory();
     });
+    if (widget.action.notificationTime != null) {
+      final parts = widget.action.notificationTime!.split(":");
+      if (parts.length == 2) {
+        _notificationTime = TimeOfDay(
+          hour: int.parse(parts[0]),
+          minute: int.parse(parts[1]),
+        );
+      }
+    }
   }
 
   @override
@@ -101,10 +112,53 @@ class _ActionEditScreenState extends State<ActionEditScreen> {
     }
   }
 
+  Future<void> _pickNotificationTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _notificationTime ?? TimeOfDay(hour: 9, minute: 0),
+    );
+    if (picked != null) {
+      setState(() {
+        _notificationTime = picked;
+      });
+    }
+  }
+
   void _save() async {
     if (!_formKey.currentState!.validate()) return;
     final title = _titleController.text.trim();
     final desc = _descController.text.trim();
+    String? notificationTimeStr;
+    DateTime? notificationDateTime;
+    if (_selectedPushSchedule != null && _notificationTime != null) {
+      notificationTimeStr = _notificationTime!.format(context);
+      int daysBefore = 0;
+      switch (_selectedPushSchedule!) {
+        case model.PushSchedule.sameDay:
+          daysBefore = 0;
+          break;
+        case model.PushSchedule.oneDayBefore:
+          daysBefore = 1;
+          break;
+        case model.PushSchedule.threeDaysBefore:
+          daysBefore = 3;
+          break;
+        case model.PushSchedule.sevenDaysBefore:
+          daysBefore = 7;
+          break;
+      }
+      final notifyDate = _selectedDate.subtract(Duration(days: daysBefore));
+      notificationDateTime = DateTime(
+        notifyDate.year,
+        notifyDate.month,
+        notifyDate.day,
+        _notificationTime!.hour,
+        _notificationTime!.minute,
+      );
+    } else {
+      notificationTimeStr = null;
+      notificationDateTime = null;
+    }
     final updatedAction = widget.action.copyWith(
       title: title,
       description: desc.isEmpty ? null : desc,
@@ -113,6 +167,8 @@ class _ActionEditScreenState extends State<ActionEditScreen> {
       repeatType: _selectedRepeatType,
       pushSchedules: _selectedPushSchedules,
       amount: _selectedCategory == model.CategoryType.expense ? _amount : 0,
+      notificationTime: notificationTimeStr,
+      notificationDateTime: notificationDateTime,
     );
     final calendarProvider = Provider.of<CalendarProvider>(
       context,
@@ -225,7 +281,7 @@ class _ActionEditScreenState extends State<ActionEditScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          '$_selectedDate.year. $_selectedDate.month. $_selectedDate.day. (${['월', '화', '수', '목', '금', '토', '일'][_selectedDate.weekday - 1]})',
+                          '${_selectedDate.year}. ${_selectedDate.month.toString().padLeft(2, '0')}. ${_selectedDate.day.toString().padLeft(2, '0')} (${['월', '화', '수', '목', '금', '토', '일'][_selectedDate.weekday - 1]})',
                           style: const TextStyle(
                             fontSize: 16,
                             color: Colors.white,
@@ -261,6 +317,7 @@ class _ActionEditScreenState extends State<ActionEditScreen> {
                       controller: _amountController,
                       focusNode: _amountFocusNode,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -447,6 +504,35 @@ class _ActionEditScreenState extends State<ActionEditScreen> {
                     },
                   ),
                 ),
+                if (_selectedPushSchedule != null) ...[
+                  const SizedBox(height: 16),
+                  _buildFormRow(
+                    label: '알림 시간',
+                    child: GestureDetector(
+                      onTap: _pickNotificationTime,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF23262F),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: Text(
+                          _notificationTime != null
+                              ? _notificationTime!.format(context)
+                              : '시간 선택',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 40),
                 SizedBox(
                   width: double.infinity,

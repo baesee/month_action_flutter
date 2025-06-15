@@ -4,6 +4,7 @@ import '../../data/models/action_model.dart' as model;
 import '../viewmodels/calendar_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:month_action/presentation/widgets/gradient_button.dart';
+import 'package:flutter/services.dart';
 
 class ActionAddScreen extends StatefulWidget {
   const ActionAddScreen({super.key});
@@ -27,6 +28,7 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
   final _amountController = TextEditingController();
   final _amountFocusNode = FocusNode();
   final _titleFocusNode = FocusNode();
+  TimeOfDay? _notificationTime;
 
   void _focusByCategory() {
     FocusScope.of(context).unfocus();
@@ -90,6 +92,18 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
     }
   }
 
+  Future<void> _pickNotificationTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _notificationTime ?? TimeOfDay(hour: 9, minute: 0),
+    );
+    if (picked != null) {
+      setState(() {
+        _notificationTime = picked;
+      });
+    }
+  }
+
   void _save() async {
     if (!_formKey.currentState!.validate()) return;
     final title = _titleController.text.trim();
@@ -103,11 +117,69 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
       listen: false,
     );
 
+    String? notificationTimeStr;
+    DateTime? notificationDateTime;
+    if (_selectedPushSchedule != null && _notificationTime != null) {
+      notificationTimeStr = _notificationTime!.format(context);
+      int daysBefore = 0;
+      switch (_selectedPushSchedule!) {
+        case model.PushSchedule.sameDay:
+          daysBefore = 0;
+          break;
+        case model.PushSchedule.oneDayBefore:
+          daysBefore = 1;
+          break;
+        case model.PushSchedule.threeDaysBefore:
+          daysBefore = 3;
+          break;
+        case model.PushSchedule.sevenDaysBefore:
+          daysBefore = 7;
+          break;
+      }
+      final notifyDate = _selectedDate.subtract(Duration(days: daysBefore));
+      notificationDateTime = DateTime(
+        notifyDate.year,
+        notifyDate.month,
+        notifyDate.day,
+        _notificationTime!.hour,
+        _notificationTime!.minute,
+      );
+    } else {
+      notificationTimeStr = null;
+      notificationDateTime = null;
+    }
+
     if (repeatType != null) {
       final repeatGroupId = const Uuid().v4();
       final dates = _generateRepeatDates(_selectedDate, repeatType);
       final futures = <Future>[];
       for (final date in dates) {
+        DateTime? repeatNotificationDateTime;
+        if (_selectedPushSchedule != null && _notificationTime != null) {
+          int daysBefore = 0;
+          switch (_selectedPushSchedule!) {
+            case model.PushSchedule.sameDay:
+              daysBefore = 0;
+              break;
+            case model.PushSchedule.oneDayBefore:
+              daysBefore = 1;
+              break;
+            case model.PushSchedule.threeDaysBefore:
+              daysBefore = 3;
+              break;
+            case model.PushSchedule.sevenDaysBefore:
+              daysBefore = 7;
+              break;
+          }
+          final notifyDate = date.subtract(Duration(days: daysBefore));
+          repeatNotificationDateTime = DateTime(
+            notifyDate.year,
+            notifyDate.month,
+            notifyDate.day,
+            _notificationTime!.hour,
+            _notificationTime!.minute,
+          );
+        }
         final action = model.Action(
           id: const Uuid().v4(),
           title: title,
@@ -119,6 +191,8 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
           done: false,
           amount: amount,
           repeatGroupId: repeatGroupId,
+          notificationTime: notificationTimeStr,
+          notificationDateTime: repeatNotificationDateTime,
         );
         futures.add(calendarProvider.addAction(action));
       }
@@ -135,6 +209,8 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
         done: false,
         amount: amount,
         repeatGroupId: null,
+        notificationTime: notificationTimeStr,
+        notificationDateTime: notificationDateTime,
       );
       await calendarProvider.addAction(action);
     }
@@ -281,6 +357,7 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
                       controller: _amountController,
                       focusNode: _amountFocusNode,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       decoration: InputDecoration(
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -467,6 +544,35 @@ class _ActionAddScreenState extends State<ActionAddScreen> {
                     },
                   ),
                 ),
+                if (_selectedPushSchedule != null) ...[
+                  const SizedBox(height: 16),
+                  _buildFormRow(
+                    label: '알림 시간',
+                    child: GestureDetector(
+                      onTap: _pickNotificationTime,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF23262F),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white24),
+                        ),
+                        child: Text(
+                          _notificationTime != null
+                              ? _notificationTime!.format(context)
+                              : '시간 선택',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 40),
                 SizedBox(
                   width: double.infinity,

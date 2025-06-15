@@ -121,55 +121,15 @@ class _MainScreenState extends State<MainScreen> {
             );
           }),
         ),
-        floatingActionButton: Builder(
-          builder: (context) {
-            return GestureDetector(
-              onTap: _onFabPressed,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOut,
-                width: 48,
-                height: 48,
-                margin: const EdgeInsets.only(top: 8),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6DD5FA), Color(0xFF2980B9)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.22),
-                      blurRadius: 24,
-                      offset: const Offset(0, 10),
-                    ),
-                    BoxShadow(
-                      color: const Color(0xFF6DD5FA).withOpacity(0.18),
-                      blurRadius: 32,
-                      offset: const Offset(0, 0),
-                      spreadRadius: 2,
-                    ),
-                  ],
-                  border: Border.all(color: Colors.white10, width: 2),
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(24),
-                    splashColor: Colors.white.withOpacity(0.18),
-                    highlightColor: Colors.white.withOpacity(0.08),
-                    onTap: _onFabPressed,
-                    child: const Center(
-                      child: Icon(Icons.add, color: Colors.white, size: 28),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButton:
+            _selectedIndex == 0
+                ? FloatingActionButton(
+                  onPressed: _onFabPressed,
+                  backgroundColor: const Color(0xFF6DD5FA),
+                  child: const Icon(Icons.add, color: Colors.white, size: 28),
+                )
+                : null,
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         bottomNavigationBar: BottomAppBar(
           shape: const CircularNotchedRectangle(),
           notchMargin: 6,
@@ -195,7 +155,6 @@ class _MainScreenState extends State<MainScreen> {
                     onTap: () => setState(() => _selectedIndex = 1),
                   ),
                 ),
-                const SizedBox(width: 48),
                 Expanded(
                   child: _buildNavItem(
                     icon: Icons.bar_chart,

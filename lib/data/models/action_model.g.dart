@@ -27,13 +27,15 @@ class ActionAdapter extends TypeAdapter<Action> {
       done: fields[7] as bool,
       amount: fields[8] as int,
       repeatGroupId: fields[9] as String?,
+      notificationDateTime: fields[10] as DateTime?,
+      notificationTime: fields[11] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Action obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -53,7 +55,11 @@ class ActionAdapter extends TypeAdapter<Action> {
       ..writeByte(8)
       ..write(obj.amount)
       ..writeByte(9)
-      ..write(obj.repeatGroupId);
+      ..write(obj.repeatGroupId)
+      ..writeByte(10)
+      ..write(obj.notificationDateTime)
+      ..writeByte(11)
+      ..write(obj.notificationTime);
   }
 
   @override
